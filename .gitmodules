@@ -1,0 +1,13 @@
+[submodule "dep/imgui"]
+	path = dep/imgui
+	url = https://github.com/ocornut/imgui
+	branch = docking
+[submodule "dep/glfw"]
+	path = dep/glfw
+	url = https://github.com/glfw/glfw
+[submodule "dep/stb"]
+	path = dep/stb
+	url = https://github.com/nothings/stb
+[submodule "dep/sdl"]
+	path = dep/sdl
+	url = https://github.com/libsdl-org/SDL

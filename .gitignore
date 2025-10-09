@@ -1,0 +1,20 @@
+## VS Files
+/.vs
+*.sln
+*.vcxproj
+*.filters
+*.user
+
+## CMake Generated Files
+CMakeFiles/
+*.cmake
+CMakeCache.txt
+
+## Build Files
+x64/
+bin/
+Debug/
+Release/
+
+## Imgui
+imgui.ini
