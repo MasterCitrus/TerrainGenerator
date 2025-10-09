@@ -1,10 +1,19 @@
-#include "types/Vec2.h"
+#include "types/math/Vec2.h"
 
 #include <cmath>
 
 using namespace Math;
 
 const float THRESHOLD = 0.00001f;
+
+float& Vec2::operator[](size_t index)
+{
+    return *(&x + index);
+}
+const float& Vec2::operator[](size_t index) const
+{
+    return *(&x + index);
+}
 
 Vec2 Vec2::operator+(const Vec2& other) const
 {
@@ -109,4 +118,9 @@ Vec2 Math::Vec2::Normalised() const
     temp.Normalise();
 
     return temp;
+}
+
+Vec2 Math::Vec2::Perpendicular() const
+{
+    return Vec2(-y, x);
 }

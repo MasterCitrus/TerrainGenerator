@@ -6,6 +6,12 @@ namespace Math
 	{
 		float x, y;
 
+		Vec2() = default;
+		inline Vec2(float x, float y) : x(x), y(y) {}
+
+		float& operator[](size_t index);
+		const float& operator[](size_t index) const;
+
 		Vec2 operator+(const Vec2& other) const;
 		Vec2 operator-(const Vec2& other) const;
 		Vec2 operator*(float scalar) const;
@@ -30,5 +36,7 @@ namespace Math
 		void Normalise();
 
 		Vec2 Normalised() const;
+
+		Vec2 Perpendicular() const;
 	};
 }
