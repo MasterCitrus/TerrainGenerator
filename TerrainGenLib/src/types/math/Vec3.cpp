@@ -15,6 +15,11 @@ const float& Vec3::operator[](size_t index) const
     return *(&x + index);
 }
 
+Vec3 Vec3::operator-() const
+{
+    return Vec3(-x, -y, -z);
+}
+
 Vec3 Vec3::operator+(const Vec3& other) const
 {
     return Vec3(this->x + other.x, this->y + other.y, this->z + other.z);

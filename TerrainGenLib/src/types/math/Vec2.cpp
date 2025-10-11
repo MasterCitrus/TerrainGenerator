@@ -15,6 +15,11 @@ const float& Vec2::operator[](size_t index) const
     return *(&x + index);
 }
 
+Vec2 Vec2::operator-() const
+{
+    return Vec3(-x, -y, -z);
+}
+
 Vec2 Vec2::operator+(const Vec2& other) const
 {
     return Vec2(this->x + other.x, this->y + other.y);

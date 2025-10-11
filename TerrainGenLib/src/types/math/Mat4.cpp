@@ -1,6 +1,7 @@
 #include "types/math/Mat4.h"
 
 #include <cmath>
+#include <numbers>
 
 using namespace Math;
 
@@ -18,7 +19,51 @@ Mat4 Math::Mat4::Transpose()
     return Mat4(m[0][0], m[1][0], m[2][0], m[3][0], m[0][1], m[1][1], m[2][1], m[3][1], m[0][2], m[1][2], m[2][2], m[3][2], m[0][3], m[1][3], m[2][3], m[3][3]);
 }
 
-Mat4 Math::Mat4::Translate(const Vec4& translation)
+Mat4 Math::Mat4::Inverse() const
+{
+    Mat4 result;
+    float det;
+
+    float m00 = m[0][0], m01 = m[0][1], m02 = m[0][2], m03 = m[0][3];
+    float m10 = m[1][0], m11 = m[1][1], m12 = m[1][2], m13 = m[1][3];
+    float m20 = m[2][0], m21 = m[2][1], m22 = m[2][2], m23 = m[2][3];
+    float m30 = m[3][0], m31 = m[3][1], m32 = m[3][2], m33 = m[3][3];
+
+    result[0][0] = m11 * (m22 * m33 - m23 * m32) - m21 * (m12 * m33 - m13 * m32) + m31 * (m12 * m23 - m13 * m22);
+    result[0][1] = -m01 * (m22 * m33 - m23 * m32) + m21 * (m02 * m33 - m03 * m32) - m31 * (m02 * m23 - m03 * m22);
+    result[0][2] = m01 * (m12 * m33 - m13 * m32) - m11 * (m02 * m33 - m03 * m32) + m31 * (m02 * m13 - m03 * m12);
+    result[0][3] = -m01 * (m12 * m23 - m13 * m22) + m11 * (m02 * m23 - m03 * m22) - m21 * (m02 * m13 - m03 * m12);
+
+    result[1][0] = -m10 * (m22 * m33 - m23 * m32) + m20 * (m12 * m33 - m13 * m32) - m30 * (m12 * m23 - m13 * m22);
+    result[1][1] = m00 * (m22 * m33 - m23 * m32) - m20 * (m02 * m33 - m03 * m32) + m30 * (m02 * m23 - m03 * m22);
+    result[1][2] = -m00 * (m12 * m33 - m13 * m32) + m10 * (m02 * m33 - m03 * m32) - m30 * (m02 * m13 - m03 * m12);
+    result[1][3] = m00 * (m12 * m23 - m13 * m22) - m10 * (m02 * m23 - m03 * m22) + m20 * (m02 * m13 - m03 * m12);
+
+    result[2][0] = m10 * (m21 * m33 - m23 * m31) - m20 * (m11 * m33 - m13 * m31) + m30 * (m11 * m23 - m13 * m21);
+    result[2][1] = -m00 * (m21 * m33 - m23 * m31) + m20 * (m01 * m33 - m03 * m31) - m30 * (m01 * m23 - m03 * m21);
+    result[2][2] = m00 * (m11 * m33 - m13 * m31) - m10 * (m01 * m33 - m03 * m31) + m30 * (m01 * m13 - m03 * m11);
+    result[2][3] = -m00 * (m11 * m23 - m13 * m21) + m10 * (m01 * m23 - m03 * m21) - m20 * (m01 * m13 - m03 * m11);
+
+    result[3][0] = -m10 * (m21 * m32 - m22 * m31) + m20 * (m11 * m32 - m12 * m31) - m30 * (m11 * m22 - m12 * m21);
+    result[3][1] = m00 * (m21 * m32 - m22 * m31) - m20 * (m01 * m32 - m02 * m31) + m30 * (m01 * m22 - m02 * m21);
+    result[3][2] = -m00 * (m11 * m32 - m12 * m31) + m10 * (m01 * m32 - m02 * m31) - m30 * (m01 * m12 - m02 * m11);
+    result[3][3] = m00 * (m11 * m22 - m12 * m21) - m10 * (m01 * m22 - m02 * m21) + m20 * (m01 * m12 - m02 * m11);
+
+    det = m00 * result[0][0] + m01 * result[1][0] + m02 * result[2][0] + m03 * result[3][0];
+
+    if (det == 0.0f)
+        return Identity();
+
+    float invDet = 1.0f / det;
+
+    for (int col = 0; col < 4; col++)
+        for (int row = 0; row < 4; row++)
+            result[col][row] *= invDet;
+
+    return result;
+}
+
+Mat4 Math::Mat4::Translate(const Vec3& translation)
 {
     return Mat4(1.f, 0.f, 0.f, 0.f,
                 0.f, 1.f, 0.f, 0.f,
@@ -48,6 +93,7 @@ Mat4 Math::Mat4::Scale(const Vec4& scale)
 
 Mat4 Math::Mat4::Perspective(float fov, float aspect, float near, float far) const
 {
+    fov *= (std::numbers::pi / 180.0f);
     float f = 1.0f / std::tan(fov * 0.5f);
     float nf = 1.0f / (near - far);
     return Mat4(f / aspect, 0.f, 0.f, 0.f,

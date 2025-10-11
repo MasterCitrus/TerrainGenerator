@@ -2,41 +2,54 @@
 
 #include "OpenGL/Framebuffer.h"
 #include "OpenGL/Texture.h"
+#include "OpenGL/Shader.h"
 
-#include <glad/gl.h>
+#include <glad/glad.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_opengl3.h>
 
 #include <chrono>
+#include "Camera.h"
 
 bool Application::Initialise()
 {
-    if (!SDL_Init(SDL_INIT_VIDEO) != 0)
+    if (!SDL_Init(SDL_INIT_VIDEO))
     {
-
         return false;
     }
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     window = SDL_CreateWindow("Terrain Generator", 1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     if (!window)
     {
+        SDL_Quit();
         return false;
     }
 
     context = SDL_GL_CreateContext(window);
+    if (!context)
+    {
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
+
     SDL_GL_MakeCurrent(window, context);
     SDL_GL_SetSwapInterval(1);
 
-    if (!gladLoadGL((SDL_GL_GetProcAddress)))
+    if (!gladLoadGL())
     {
+        SDL_GL_DestroyContext(context);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
         return false;
     }
     
@@ -85,7 +98,7 @@ void Application::Run()
     double fpsInterval = 0;
 
     SDL_Event event;
-
+    
     while (running)
     {
         currTime = std::chrono::high_resolution_clock::now();
@@ -181,18 +194,21 @@ void Application::Update(float delta)
         ImGui::EndMainMenuBar();
     }
 
-    // Viewport Start
-    
+    // Viewport Start    
+
     ImGui::Begin("Viewport");
     ImVec2 viewport = ImGui::GetContentRegionAvail();
-
-    ImGui::Image((ImU64)framebuffer->GetColourTexture()->GetID(), viewport, ImVec2(0,1), ImVec2(1,0));
-    ImGui::End();
 
     if (FBSpec spec = framebuffer->GetSpec(); viewport.x > 0.0f && viewport.y > 0.0f && ((float)spec.width != viewport.x || (float)spec.height != viewport.y))
     {
         framebuffer->Resize((unsigned int)viewport.x, (unsigned int)viewport.y);
     }
+
+
+    ImGui::Image((void*)framebuffer->GetColourTexture()->GetID(), viewport, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::End();
+
+ 
 
     //Viewport End
 
@@ -204,3 +220,5 @@ void Application::Update(float delta)
 
     // Generator Panel End
 }
+
+

@@ -12,6 +12,8 @@ namespace Math
 		float& operator[](size_t index);
 		const float& operator[](size_t index) const;
 
+		Vec4 operator-() const;
+
 		Vec4 operator+(const Vec4& other) const;
 		Vec4 operator-(const Vec4& other) const;
 		Vec4 operator*(float scalar) const;

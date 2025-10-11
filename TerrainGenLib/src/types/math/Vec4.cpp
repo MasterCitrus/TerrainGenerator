@@ -15,6 +15,11 @@ const float& Vec4::operator[](size_t index) const
     return *(&x + index);
 }
 
+Vec4 Vec4::operator-() const
+{
+    return Vec4(-x, -y, -z, -w);
+}
+
 Vec4 Vec4::operator+(const Vec4& other) const
 {
     return Vec4(this->x + other.x, this->y + other.y, this->z + other.z, this->w + other.w);

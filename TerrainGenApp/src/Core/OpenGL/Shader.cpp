@@ -6,7 +6,7 @@
 #include <types/math/Mat2.h>
 #include <types/math/Mat3.h>
 #include <types/math/Mat4.h>
-#include <glad/gl.h>
+#include <glad/glad.h>
 
 #include <fstream>
 #include <iostream>
@@ -60,7 +60,7 @@ bool Shader::Load(const std::string& vertPath, const std::string& fragPath)
 	}
 
 	frag = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(frag, 1, &vCode, nullptr);
+	glShaderSource(frag, 1, &fCode, nullptr);
 	glCompileShader(frag);
 	glGetShaderiv(frag, GL_COMPILE_STATUS, &success);
 
@@ -113,7 +113,7 @@ bool Shader::Create(const std::string& vertSrc, const std::string& fragSrc)
 	}
 
 	frag = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(frag, 1, &vCode, nullptr);
+	glShaderSource(frag, 1, &fCode, nullptr);
 	glCompileShader(frag);
 	glGetShaderiv(frag, GL_COMPILE_STATUS, &success);
 

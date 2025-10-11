@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Vec3.h"
 #include "Vec4.h"
 
 namespace Math
@@ -26,11 +27,12 @@ namespace Math
 
 		Mat4 Identity() const;
 		Mat4 Transpose();
+		Mat4 Inverse() const;
 
 		// Normalised Vector is expected in input
-		Mat4 Translate(const Vec4& translation);
-		Mat4 Rotate(const Vec4& axis, float radians);
-		Mat4 Scale(const Vec4& scale);
+		Mat4 Translate(const Vec3& translation);
+		Mat4 Rotate(const Vec3& axis, float radians);
+		Mat4 Scale(const Vec3& scale);
 
 		Mat4 Perspective(float fov, float aspect, float near, float far) const;
 		Mat4 Orthographic(float left, float right, float bottom, float top, float near, float far) const;

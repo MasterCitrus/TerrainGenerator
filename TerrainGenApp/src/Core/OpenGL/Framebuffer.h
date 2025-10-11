@@ -26,6 +26,8 @@ public:
 	Texture* GetColourTexture() const { return colourTexture; }
 	Texture* GetDepthTexture() const { return depthTexture; }
 	unsigned int GetID() const { return framebufferID; }
+	unsigned int GetColourID() const { return framebufferID; }
+	unsigned int GetDepthID() const { return framebufferID; }
 
 	FBSpec GetSpec() const { return spec; }
 
