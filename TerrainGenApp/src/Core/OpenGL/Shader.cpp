@@ -21,8 +21,16 @@ bool Shader::Load(const std::string& vertPath, const std::string& fragPath)
 		return false;
 	}
 
-	std::ifstream vertex(vertPath);
-	std::ifstream fragment(fragPath);
+	std::fstream vertex;
+	std::fstream fragment;
+
+	vertex.open(vertPath);
+	fragment.open(fragPath);
+
+	if (!vertex.is_open() || !fragment.is_open())
+	{
+		return false;
+	}
 
 	std::stringstream vStream, fStream;
 

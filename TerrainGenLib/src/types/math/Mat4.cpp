@@ -71,7 +71,7 @@ Mat4 Math::Mat4::Translate(const Vec3& translation)
                 translation.x, translation.y, translation.z, 1.f);
 }
 
-Mat4 Math::Mat4::Rotate(const Vec4& axis, float radians)
+Mat4 Math::Mat4::Rotate(const Vec3& axis, float radians)
 {
     float c = std::cos(radians);
     float s = std::sin(radians);
@@ -83,7 +83,7 @@ Mat4 Math::Mat4::Rotate(const Vec4& axis, float radians)
                 0.f,                              0.f,                              0.f,                     1.f);
 }
 
-Mat4 Math::Mat4::Scale(const Vec4& scale)
+Mat4 Math::Mat4::Scale(const Vec3& scale)
 {
     return Mat4(scale.x, 0.f, 0.f, 0.f,
                 0.f, scale.y, 0.f, 0.f,

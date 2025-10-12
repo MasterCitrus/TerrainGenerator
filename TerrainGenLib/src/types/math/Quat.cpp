@@ -4,7 +4,7 @@
 
 using namespace Math;
 
-inline Quat::Quat(float yaw, float pitch, float roll)
+Quat::Quat(float yaw, float pitch, float roll)
 {
 	float hy = yaw * 0.5f;
 	float hp = pitch * 0.5f;

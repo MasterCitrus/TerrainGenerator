@@ -1,5 +1,7 @@
 #include "Camera.h"
 
+using namespace Math;
+
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
 	: fov(fov), aspectRatio(aspectRatio), nearClip(nearClip), farClip(farClip), projection(Mat4().Perspective(fov, aspectRatio, nearClip, farClip))
 {
@@ -47,6 +49,49 @@ void Camera::SetFocus(const Vec3& focalPoint)
 void Camera::Update(float delta)
 {
 
+}
+
+void Camera::OnEvent(Event& event)
+{
+	switch (event.GetType())
+	{
+		case EventType::MouseButtonDown:
+		{
+			auto& ev = static_cast<MouseButtonDownEvent&>(event);
+			OnMouseDown(ev);
+			break;
+		}
+		case EventType::MouseButtonUp:
+		{
+			auto& ev = static_cast<MouseButtonUpEvent&>(event);
+			OnMouseUp(ev);
+			break;
+		}
+		case EventType::MouseScroll:
+		{
+			auto& ev = static_cast<MouseScrollEvent&>(event);
+			OnMouseScroll(ev);
+			break;
+		}
+		case EventType::KeyUp:
+		{
+			auto& ev = static_cast<KeyDownEvent&>(event);
+			OnKeyDown(ev);
+			break;
+		}
+		case EventType::KeyDown:
+		{
+			auto& ev = static_cast<KeyUpEvent&>(event);
+			OnKeyUp(ev);
+			break;
+		}
+		case EventType::MouseMove:
+		{
+			auto& ev = static_cast<MouseMoveEvent&>(event);
+			OnMouseMove(ev);
+			break;
+		}
+	}
 }
 
 void Camera::UpdateProjection()
@@ -111,4 +156,84 @@ float Camera::ZoomSpeed() const
 Vec3 Camera::CalculatePosition() const
 {
 	return focalPoint - GetForwardVector() * distance;
+}
+
+void Camera::OnMouseDown(MouseButtonDownEvent& event)
+{
+	switch (event.button)
+	{
+		case 1: // Left Button
+			leftMouse = true;
+			break;
+		case 2: // Middle Button
+			middleMouse = true;
+			break;
+		case 3: // Right Button
+			rightMouse = true;
+			break;
+			// 4 Side button
+			// 5 Side button
+		default:
+			break;
+	}
+
+	event.handled = true;
+}
+
+void Camera::OnMouseUp(MouseButtonUpEvent& event)
+{
+	switch (event.button)
+	{
+		case 1: // Left Button
+			leftMouse = false;
+			break;
+		case 2: // Middle Button
+			middleMouse = false;
+			break;
+		case 3: // Right Button
+			rightMouse = false;
+			break;
+			// 4 Side button
+			// 5 Side button
+		default:
+			break;
+	}
+
+	event.handled = true;
+}
+
+void Camera::OnMouseScroll(MouseScrollEvent& event)
+{
+	Zoom(event.yScroll);
+
+	event.handled = true;
+}
+
+void Camera::OnMouseMove(MouseMoveEvent& event)
+{
+	const Vec2& mouse = { (float)event.x, (float)event.y };
+	Vec2 mouseDelta = (mouse - lastMousePos) * 0.009f;
+	lastMousePos = mouse;
+	if (middleMouse)
+	{
+		Pan(mouseDelta);
+	}
+	else if (rightMouse && leftMouse)
+	{
+		Zoom(mouseDelta.y);
+	}
+	else if (rightMouse)
+	{
+		Rotate(mouseDelta);
+	}
+
+	event.handled = true;
+}
+
+void Camera::OnKeyDown(KeyDownEvent& event)
+{
+}
+
+void Camera::OnKeyUp(KeyUpEvent& event)
+{
 }

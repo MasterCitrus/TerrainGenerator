@@ -5,6 +5,7 @@
 #include "types/math/Quat.h"
 #include "types/math/Utils.h"
 #include "types/math/Vec2.h"
+#include "../Events/Event.h"
 
 #include <utility>
 
@@ -32,7 +33,9 @@ public:
 	void SetFocus(const Vec3& focalPoint);
 
 	void Update(float delta);
-	void OnEvent();
+	void OnEvent(Event& event);
+
+	Vec2 GetLastMousePos() const { return lastMousePos; }
 
 private:
 	void UpdateProjection();
@@ -46,6 +49,13 @@ private:
 	float ZoomSpeed() const;
 
 	Vec3 CalculatePosition() const;
+
+	void OnMouseDown(MouseButtonDownEvent& event);
+	void OnMouseUp(MouseButtonUpEvent& event);
+	void OnMouseScroll(MouseScrollEvent& event);
+	void OnMouseMove(MouseMoveEvent& event);
+	void OnKeyDown(KeyDownEvent& event);
+	void OnKeyUp(KeyUpEvent& event);
 
 private:
 	Mat4 projection = Mat4();
@@ -68,4 +78,7 @@ private:
 
 	unsigned int width = 1280, height = 720;
 
+	bool rightMouse = false;
+	bool leftMouse = false;
+	bool middleMouse = false;
 };

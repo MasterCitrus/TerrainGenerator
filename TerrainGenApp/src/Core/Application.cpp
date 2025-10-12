@@ -1,19 +1,21 @@
 #include "Application.h"
 
 #include "OpenGL/Framebuffer.h"
-#include "OpenGL/Texture.h"
+#include "OpenGL/Mesh.h"
 #include "OpenGL/Shader.h"
+#include "OpenGL/Texture.h"
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_events.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_opengl3.h>
 
 #include <chrono>
-#include "Camera.h"
+#include <filesystem>
 
 bool Application::Initialise()
 {
@@ -68,6 +70,15 @@ bool Application::Initialise()
         return false;
     }
 
+    auto path = std::filesystem::current_path();
+
+    
+
+    if (!shader.Load(path.string() + "\\shaders\\mesh.vert", path.string() + "\\shaders\\mesh.frag"))
+    {
+        return false;
+    }
+
     running = true;
 
     return true;
@@ -97,8 +108,10 @@ void Application::Run()
     unsigned int frames = 0;
     double fpsInterval = 0;
 
-    SDL_Event event;
-    
+    mesh = new Mesh(nullptr, MeshShape::Quad);
+
+    RegisterListeners();
+
     while (running)
     {
         currTime = std::chrono::high_resolution_clock::now();
@@ -116,14 +129,7 @@ void Application::Run()
             fpsInterval = 0;
         }
 
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                running = false;
-            }
-        }
+        ProcessSDLEvents();
         
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
@@ -138,6 +144,8 @@ void Application::Run()
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
+
+    delete mesh;
 
     Deinitialise();
 }
@@ -165,15 +173,97 @@ void Application::Update(float delta)
         ImGui::DockBuilderFinish(dockspaceID);
     }
 
-    glClearColor(1.0f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     framebuffer->Bind();
 
     glEnable(GL_DEPTH_TEST);
 
-    glClearColor(1.0f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    shader.Bind();
+
+    shader.SetVec("viewPos", camera.GetPosition());
+    shader.SetMat("projection", camera.GetProjectionMatrix());
+    shader.SetMat("view", camera.GetViewMatrix());
+
+    Mat4 model;
+    model.Translate(Vec3(0.0f, 0.0f, 0.0f));
+    model.Scale(Vec3(1.0f, 1.0f, 1.0f));
+
+    shader.SetMat("model", model);
+
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    
+    //std::vector<float> vertices = {
+    //    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+    //     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+    //     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    //     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    //    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    //    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    //    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    //     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    //     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    //     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    //    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    //    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    //    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    //    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    //    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    //    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    //    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    //    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    //     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    //     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    //     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    //     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    //     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    //     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    //    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    //     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+    //     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    //     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    //    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    //    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    //    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    //     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    //     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    //     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    //    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    //    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    //};
+
+    //unsigned int VBO, VAO;
+    //glGenVertexArrays(1, &VAO);
+    //glGenBuffers(1, &VBO);
+
+    //glBindVertexArray(VAO);
+
+    //glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
+
+    //// position attribute
+    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    //glEnableVertexAttribArray(0);
+    //// texture coord attribute
+    //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    //glEnableVertexAttribArray(1);
+
+    //glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+
+    mesh->Draw();
 
     framebuffer->Unbind();
 
@@ -202,6 +292,7 @@ void Application::Update(float delta)
     if (FBSpec spec = framebuffer->GetSpec(); viewport.x > 0.0f && viewport.y > 0.0f && ((float)spec.width != viewport.x || (float)spec.height != viewport.y))
     {
         framebuffer->Resize((unsigned int)viewport.x, (unsigned int)viewport.y);
+        camera.SetViewportSize(viewport.x, viewport.y);
     }
 
 
@@ -216,9 +307,72 @@ void Application::Update(float delta)
 
     ImGui::Begin("GenPanel");
     ImGui::SeparatorText("Generator Panel");
+    ImGui::Text("Mouse Pos: %.2f, %.2f", camera.GetLastMousePos().x, camera.GetLastMousePos().y);
     ImGui::End();
 
     // Generator Panel End
 }
 
 
+void Application::ProcessSDLEvents()
+{
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event))
+    {
+        ImGui_ImplSDL3_ProcessEvent(&event);
+
+        switch (event.type)
+        {
+            case SDL_EVENT_QUIT:
+                running = false;
+                break;
+            case SDL_EVENT_KEY_DOWN:
+            {
+                KeyDownEvent e(event.key.scancode, event.key.repeat);
+                bus.Dispatch(e);
+                break;
+            }
+            case SDL_EVENT_KEY_UP:
+            {
+                KeyUpEvent e(event.key.scancode, false);
+                bus.Dispatch(e);
+                break;
+            }
+            case SDL_EVENT_MOUSE_MOTION:
+            {
+                MouseMoveEvent e(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
+                bus.Dispatch(e);
+                break;
+            }
+            case SDL_EVENT_MOUSE_WHEEL:
+            {
+                MouseScrollEvent e(event.wheel.x, event.wheel.y);
+                bus.Dispatch(e);
+                break;
+            }
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            {
+                MouseButtonDownEvent e(event.button.button, event.button.x, event.button.y);
+                bus.Dispatch(e);
+                break;
+            }
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+            {
+                MouseButtonUpEvent e(event.button.button, event.button.x, event.button.y);
+                bus.Dispatch(e);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
+void Application::RegisterListeners()
+{
+    bus.Subscribe(EventType::MouseButtonDown, [this](Event& event) { camera.OnEvent(event); });
+    bus.Subscribe(EventType::MouseButtonUp, [this](Event& event) { camera.OnEvent(event); });
+    bus.Subscribe(EventType::MouseMove, [this](Event& event) { camera.OnEvent(event); });
+    bus.Subscribe(EventType::MouseScroll, [this](Event& event) { camera.OnEvent(event); });
+}

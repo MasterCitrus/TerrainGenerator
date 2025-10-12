@@ -96,13 +96,11 @@ void Mesh::MakeQuad()
 	Vertex topRight = { pos3, norm, uv3 };
 	Vertex topLeft = { pos4, norm, uv4 };
 
-	vertices.clear();
-	vertices.push_back(topLeft);
-	vertices.push_back(bottomRight);
-	vertices.push_back(topRight);
 	vertices.push_back(bottomLeft);
+	vertices.push_back(bottomRight);
+	vertices.push_back(topLeft);
+	vertices.push_back(topRight);
 
-	indices.clear();
 	indices = { 0, 1, 2, 2, 3, 0 };
 }
 

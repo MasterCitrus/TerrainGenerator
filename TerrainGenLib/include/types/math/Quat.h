@@ -12,7 +12,7 @@ namespace Math
 		inline Quat() : w(1), x(0), y(0), z(0) {}
 		inline Quat(float w, float x, float y, float z)
 			: w(w), x(x), y(y), z(z) { }
-		inline Quat(float yaw, float pitch, float roll);
+		Quat(float yaw, float pitch, float roll);
 		inline Quat(const Vec3& euler) : Quat(euler.y, euler.x, euler.z) {}
 
 		Quat Normalised() const;
