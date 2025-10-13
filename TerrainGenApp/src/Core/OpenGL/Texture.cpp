@@ -4,9 +4,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-Texture::Texture(unsigned int width, unsigned int height, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter)
+Texture::Texture(unsigned int width, unsigned int height, unsigned char* data, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter)
 {
-	Create(width, height, type, format, wrap, filter);
+	Create(width, height, data, type, format, wrap, filter);
 }
 
 Texture::Texture(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter)
@@ -22,7 +22,7 @@ Texture::~Texture()
 	}
 }
 
-bool Texture::Create(unsigned int width, unsigned int height, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter)
+bool Texture::Create(unsigned int width, unsigned int height, unsigned char* data, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter)
 {
 	if (textureID != 0)
 	{
@@ -98,16 +98,16 @@ bool Texture::Create(unsigned int width, unsigned int height, TextureType type, 
 		switch (format)
 		{
 			case TextureFormat::GS:
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
 				break;
 			case TextureFormat::GSA:
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
 				break;
 			case TextureFormat::RGB:
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 				break;
 			case TextureFormat::RGBA:
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 				break;
 			default:
 				return false;
@@ -115,9 +115,10 @@ bool Texture::Create(unsigned int width, unsigned int height, TextureType type, 
 	}
 	else if (type == TextureType::Depth)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, data);
 	}
 
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	return true;
@@ -192,7 +193,7 @@ bool Texture::Load(const std::string& path, TextureType type, TextureWrapping wr
 			return false;
 	}
 
-	stbi_set_flip_vertically_on_load(true);
+	//stbi_set_flip_vertically_on_load(true);
 
 	int width, height, channels;
 	unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);

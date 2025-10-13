@@ -12,8 +12,8 @@ Framebuffer::Framebuffer(unsigned int width, unsigned int height)
 
 	glGenFramebuffers(1, &framebufferID);
 
-	colourTexture = new Texture(width, height, TextureType::Colour, TextureFormat::RGB, TextureWrapping::None, TextureFilter::Linear);
-	depthTexture = new Texture(width, height, TextureType::Depth, TextureFormat::RGB, TextureWrapping::None, TextureFilter::Linear);
+	colourTexture = new Texture(width, height, nullptr, TextureType::Colour, TextureFormat::RGB, TextureWrapping::None, TextureFilter::Linear);
+	depthTexture = new Texture(width, height, nullptr, TextureType::Depth, TextureFormat::RGB, TextureWrapping::None, TextureFilter::Linear);
 	//glGenTextures(1, &colourTextureID);
 	//glBindTexture(GL_TEXTURE_2D, colourTextureID);
 
@@ -64,8 +64,8 @@ void Framebuffer::Resize(unsigned int width, unsigned int height)
 	delete colourTexture;
 	delete depthTexture;
 
-	colourTexture = new Texture(width, height, TextureType::Colour, TextureFormat::RGBA, TextureWrapping::None, TextureFilter::Linear);
-	depthTexture = new Texture(width, height, TextureType::Depth, TextureFormat::RGBA, TextureWrapping::None, TextureFilter::Linear);
+	colourTexture = new Texture(width, height, nullptr, TextureType::Colour, TextureFormat::RGB, TextureWrapping::None, TextureFilter::Linear);
+	depthTexture = new Texture(width, height, nullptr, TextureType::Depth, TextureFormat::RGB, TextureWrapping::None, TextureFilter::Linear);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
 

@@ -38,11 +38,12 @@ enum class TextureFilter : uint8_t
 class Texture
 {
 public:
-	Texture(unsigned int width, unsigned int height, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter);
+	Texture(unsigned int width, unsigned int height, unsigned char* data = nullptr, TextureType type = TextureType::Colour,
+		TextureFormat format = TextureFormat::RGBA, TextureWrapping wrap = TextureWrapping::Repeat, TextureFilter filter = TextureFilter::Linear);
 	Texture(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter);
 	~Texture();
 
-	bool Create(unsigned int width, unsigned int height, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter);
+	bool Create(unsigned int width, unsigned int height, unsigned char* data, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter);
 	bool Load(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter);
 
 	void Bind(int slot = 0) const;
