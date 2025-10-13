@@ -28,8 +28,8 @@ bool Texture::Create(unsigned int width, unsigned int height, unsigned char* dat
 	{
 		glDeleteTextures(1, &textureID);
 		textureID = 0;
-		width = 0;
-		height = 0;
+		this->width = 0;
+		this->height = 0;
 	}
 
 	this->width = width;
@@ -99,6 +99,8 @@ bool Texture::Create(unsigned int width, unsigned int height, unsigned char* dat
 		{
 			case TextureFormat::GS:
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
 				break;
 			case TextureFormat::GSA:
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);

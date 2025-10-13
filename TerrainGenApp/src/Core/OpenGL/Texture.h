@@ -38,6 +38,7 @@ enum class TextureFilter : uint8_t
 class Texture
 {
 public:
+	Texture() = default;
 	Texture(unsigned int width, unsigned int height, unsigned char* data = nullptr, TextureType type = TextureType::Colour,
 		TextureFormat format = TextureFormat::RGBA, TextureWrapping wrap = TextureWrapping::Repeat, TextureFilter filter = TextureFilter::Linear);
 	Texture(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter);

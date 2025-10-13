@@ -6,6 +6,8 @@
 #include "OpenGL/Shader.h"
 #include "OpenGL/Texture.h"
 
+#include <MapGenerator.h>
+
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
@@ -16,6 +18,7 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <numbers>
 
@@ -76,6 +79,8 @@ bool Application::Initialise()
 
     camera = new Camera(45.0f, 1.778f, 0.1f, 1000.f);
 
+    meshTexture = new Texture;
+
     if (!shader.Load(path.string() + "\\shaders\\mesh.vert", path.string() + "\\shaders\\mesh.frag"))
     {
         return false;
@@ -90,6 +95,7 @@ void Application::Deinitialise()
 {
     delete camera;
     delete framebuffer;
+    delete meshTexture;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
@@ -113,27 +119,7 @@ void Application::Run()
 
     Material mat(&shader);
 
-    auto path = std::filesystem::current_path();
-
-    Texture texture(path.string() + "\\ignoreassets\\random.jpg", TextureType::Colour, TextureWrapping::Repeat, TextureFilter::Linear);
-
-    unsigned char pixels[256 * 256];
-
-    std::random_device rand;
-    std::mt19937 gen(rand());
-    std::uniform_int_distribution<unsigned int> distrib(0, 256);
-
-    for (int i = 0; i < 256; i++)
-    {
-        for (int j = 0; j < 256; j++)
-        {
-            pixels[j * 256 + i] = distrib(gen);
-        }
-    }
-
-    Texture noise(256, 256, pixels, TextureType::Colour, TextureFormat::GS);
-
-    mat.SetTexture(&noise);
+    mat.SetTexture(meshTexture);
 
     mesh = new Mesh(&mat, MeshShape::Quad);
 
@@ -333,7 +319,11 @@ void Application::Update(float delta)
     // Generator Panel Start
 
     ImGui::Begin("GenPanel");
+    ImVec2 panelSize = ImGui::GetContentRegionAvail();
     ImGui::SeparatorText("Generator Panel");
+    ///////////////////////////////////////
+    ////// Seed ///////////////////////////
+    ///////////////////////////////////////
     ImGui::Text("Seed");
     ImGui::SameLine();
     ImGui::InputScalar("##seedinput", ImGuiDataType_U32, &data.seed);
@@ -346,9 +336,62 @@ void Application::Update(float delta)
 
         data.seed = distrib(mt);
     }
+    ///////////////////////////////////////
+    ////// Noise Scale ////////////////////
+    ///////////////////////////////////////
+    ImGui::Text("Noise Scale");
+    ImGui::SameLine();
+    ImGui::DragFloat("##noisescale", &data.noiseScale, 0.01f, 0.00001f, 100.0f, "%.5f");
+    ///////////////////////////////////////
+    ////// Octaves ////////////////////////
+    ///////////////////////////////////////
+    ImGui::Text("Octaves");
+    ImGui::SameLine();
+    unsigned int minValue = 1;
+    ImGui::DragScalar("##octaves", ImGuiDataType_U32, &data.octaves, 1.0f, &minValue);
+    ///////////////////////////////////////
+    ////// Persistence ///////////////////
+    ///////////////////////////////////////
+    ImGui::Text("Persistence");
+    ImGui::SameLine();
+    ImGui::SliderFloat("##persistence", &data.persistence, 0.0f, 1.0f);
+    ///////////////////////////////////////
+    ////// Lacunarity /////////////////////
+    ///////////////////////////////////////
+    ImGui::Text("Lacunarity");
+    ImGui::SameLine();
+    ImGui::DragFloat("##lacunarity", &data.lacunarity, 0.01f, 0.0f, 100.0f);
+    ///////////////////////////////////////
+    ////// Offset /////////////////////////
+    ///////////////////////////////////////
+    ImGui::Text("Offset");
+    ImGui::SameLine();
+    ImGui::DragFloat2("##offset", &data.offset[0], 0.01f);
+    ///////////////////////////////////////
+    ////// Auto Update ////////////////////
+    ///////////////////////////////////////
+    ImGui::Text("Auto Update");
+    ImGui::SameLine();
+    ImGui::Checkbox("##autoupdate", &autoUpdateGenerator);
+    ///////////////////////////////////////
+    ////// Generate Button ////////////////
+    ///////////////////////////////////////
+    if (ImGui::Button("Generate", ImVec2(panelSize.x, ImGui::CalcTextSize("Generate").y + ImGui::GetStyle().FramePadding.x * 2.0f)))
+    {
+        GenerateTerrain();
+    }
     ImGui::End();
 
     // Generator Panel End
+
+    if (autoUpdateGenerator)
+    {
+        if (data != dataLastFrame)
+        {
+            GenerateTerrain();
+            dataLastFrame = data;
+        }
+    }
 }
 
 
@@ -415,4 +458,27 @@ void Application::RegisterListeners()
     bus.Subscribe(EventType::MouseScroll, [this](Event& event) { camera->OnEvent(event); });
     bus.Subscribe(EventType::KeyDown, [this](Event& event) { camera->OnEvent(event); });
     bus.Subscribe(EventType::KeyUp, [this](Event& event) { camera->OnEvent(event); });
+}
+
+void Application::GenerateTerrain()
+{
+    MapGenerator generator;
+
+    auto map = generator.GenerateNoiseMap(data.noiseScale, data.octaves, data.persistence, data.lacunarity, data.offset, data.seed);
+
+    unsigned int size = map.size();
+
+    std::vector<unsigned char> pixels(size * size);
+
+    int k = 0;
+    for (int y = 0; y < size; y++)
+    {
+        for (int x = 0; x < size; x++)
+        {
+            pixels[k] = std::floor(map[y][x] * 255);
+            k++;
+        }
+    }
+
+    meshTexture->Create(size, size, pixels.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::Repeat, TextureFilter::Linear);
 }

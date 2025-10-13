@@ -14,6 +14,6 @@ void Material::SetTexture(Texture* texture)
 
 void Material::Apply()
 {
-	shader->SetInt("texture1", 0);
-	texture->Bind(0);
+	shader->SetInt("texture1", 1);
+	texture->Bind(1);
 }
