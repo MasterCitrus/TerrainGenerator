@@ -7,7 +7,7 @@ struct GeneratorData
 	unsigned int seed = 0;
 	float lacunarity = 2.0f;
 	float persistence = 0.5f;
-	float noiseScale = 0.1f;
+	float noiseScale = 20.0f;
 	unsigned int octaves = 1;
 	Math::Vec2 offset = { 0.0f, 0.0f };
 

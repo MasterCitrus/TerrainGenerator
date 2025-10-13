@@ -125,6 +125,8 @@ void Application::Run()
 
     RegisterListeners();
 
+    GenerateTerrain();
+
     while (running)
     {
         currTime = std::chrono::high_resolution_clock::now();
