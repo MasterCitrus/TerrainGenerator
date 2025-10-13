@@ -84,9 +84,9 @@ public:
 class MouseScrollEvent : public Event
 {
 public:
-	MouseScrollEvent(int xScroll, int yScroll) : xScroll(xScroll), yScroll(yScroll) {}
+	MouseScrollEvent(float xScroll, float yScroll) : xScroll(xScroll), yScroll(yScroll) {}
 	EventType GetType() const override { return EventType::MouseScroll; }
 
 public:
-	int xScroll, yScroll;
+	float xScroll, yScroll;
 };

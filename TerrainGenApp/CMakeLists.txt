@@ -27,4 +27,5 @@ target_link_libraries(TerrainGenApp
 		SDL3::SDL3
 		imgui
 		stb
+		glm
 )

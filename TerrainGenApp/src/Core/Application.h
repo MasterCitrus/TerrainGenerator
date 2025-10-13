@@ -1,8 +1,11 @@
 #pragma once
 
 #include "Events/EventBus.h"
+#include "GeneratorData.h"
 #include "OpenGL/Camera.h"
 #include "OpenGL/Shader.h"
+
+#include <random>
 
 class Framebuffer;
 class Mesh;
@@ -31,9 +34,10 @@ private:
 	void RegisterListeners();
 
 private:
-	Camera camera;
 	EventBus bus;
+	GeneratorData data;
 	SDL_Window* window;
+	Camera* camera;
 	Mesh* mesh;
 	Framebuffer* framebuffer;
 	SDL_GLContext context;

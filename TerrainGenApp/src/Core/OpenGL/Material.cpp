@@ -1,4 +1,6 @@
 #include "Material.h"
+#include "Shader.h"
+#include "Texture.h"
 
 Material::Material(Shader* shader)
 	: shader(shader)
@@ -8,4 +10,10 @@ Material::Material(Shader* shader)
 void Material::SetTexture(Texture* texture)
 {
 	this->texture = texture;
+}
+
+void Material::Apply()
+{
+	shader->SetInt("texture1", 0);
+	texture->Bind(0);
 }

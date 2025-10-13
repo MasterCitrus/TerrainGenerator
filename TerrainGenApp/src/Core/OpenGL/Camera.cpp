@@ -1,34 +1,33 @@
 #include "Camera.h"
 
-using namespace Math;
+#include <glm/vec3.hpp>
+#include <glm/ext.hpp>
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
-	: fov(fov), aspectRatio(aspectRatio), nearClip(nearClip), farClip(farClip), projection(Mat4().Perspective(fov, aspectRatio, nearClip, farClip))
+	: fov(fov), aspectRatio(aspectRatio), nearClip(nearClip), farClip(farClip), projection(glm::perspective(glm::radians(fov), aspectRatio, nearClip, farClip))
 {
 	UpdateView();
 }
 
-Quat Camera::GetOrientation() const
+glm::quat Camera::GetOrientation() const
 {
-	return Quat(-pitch, -yaw, 0.0f);
+	return glm::quat(glm::vec3(-pitch, -yaw, 0.0f));
 }
 
-Vec3 Camera::GetUpVector() const
+glm::vec3 Camera::GetUpVector() const
 {
-	Quat quat = GetOrientation();
-	return quat.Rotate(Vec3(0.0f, 1.0f, 0.0f));
+	return glm::rotate(GetOrientation(), glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
-Vec3 Camera::GetRightVector() const
+glm::vec3 Camera::GetRightVector() const
 {
-	Quat quat = GetOrientation();
-	return quat.Rotate(Vec3(1.0f, 0.0f, 0.0f));
+	glm::quat quat = GetOrientation();
+	return glm::rotate(quat, glm::vec3(1.0f, 0.0f, 0.0f));
 }
 
-Vec3 Camera::GetForwardVector() const
+glm::vec3 Camera::GetForwardVector() const
 {
-	Quat quat = GetOrientation();
-	return quat.Rotate(Vec3(0.0f, 0.0f, -1.0f));
+	return glm::rotate(GetOrientation(), glm::vec3(0.0f, 0.0f, -1.0f));
 }
 
 void Camera::SetViewportSize(float width, float height)
@@ -39,7 +38,7 @@ void Camera::SetViewportSize(float width, float height)
 	UpdateProjection();
 }
 
-void Camera::SetFocus(const Vec3& focalPoint)
+void Camera::SetFocus(const glm::vec3& focalPoint)
 {
 	this->focalPoint = focalPoint;
 
@@ -97,26 +96,26 @@ void Camera::OnEvent(Event& event)
 void Camera::UpdateProjection()
 {
 	aspectRatio = (float)width / (float)height;
-	projection = Mat4().Perspective(fov, aspectRatio, nearClip, farClip);
+	projection = glm::perspective(glm::radians(fov), aspectRatio, nearClip, farClip);
 }
 
 void Camera::UpdateView()
 {
 	position = CalculatePosition();
 
-	Quat orientation = GetOrientation();
-	view = Mat4().Translate(position) * orientation.ToMat4();
-	view = view.Inverse();
+	glm::quat orientation = GetOrientation();
+	view = glm::translate(glm::mat4(1.0f), position) * glm::toMat4(orientation);
+	view = glm::inverse(view);
 }
 
-void Camera::Pan(const Vec2& delta)
+void Camera::Pan(const glm::vec2& delta)
 {
 	auto [x, y] = PanSpeed();
 	focalPoint += -GetRightVector() * delta.x * x * distance;
-	focalPoint += -GetUpVector() * delta.y * y * distance;
+	focalPoint += GetUpVector() * delta.y * y * distance;
 }
 
-void Camera::Rotate(const Vec2& delta)
+void Camera::Rotate(const glm::vec2& delta)
 {
 	float yawSign = GetUpVector().y < 0 ? -1.0f : 1.0f;
 	yaw += yawSign * delta.x * turnSpeed;
@@ -153,7 +152,7 @@ float Camera::ZoomSpeed() const
 	return speed;
 }
 
-Vec3 Camera::CalculatePosition() const
+glm::vec3 Camera::CalculatePosition() const
 {
 	return focalPoint - GetForwardVector() * distance;
 }
@@ -204,15 +203,17 @@ void Camera::OnMouseUp(MouseButtonUpEvent& event)
 
 void Camera::OnMouseScroll(MouseScrollEvent& event)
 {
-	Zoom(event.yScroll);
+	float delta = event.yScroll * 0.2f;
+	Zoom(delta);
+	UpdateView();
 
 	event.handled = true;
 }
 
 void Camera::OnMouseMove(MouseMoveEvent& event)
 {
-	const Vec2& mouse = { (float)event.x, (float)event.y };
-	Vec2 mouseDelta = (mouse - lastMousePos) * 0.009f;
+	const glm::vec2& mouse = { (float)event.x, (float)event.y };
+	glm::vec2 mouseDelta = (mouse - lastMousePos) * 0.009f;
 	lastMousePos = mouse;
 	if (middleMouse)
 	{
@@ -227,11 +228,23 @@ void Camera::OnMouseMove(MouseMoveEvent& event)
 		Rotate(mouseDelta);
 	}
 
+	UpdateView();
+
 	event.handled = true;
 }
 
 void Camera::OnKeyDown(KeyDownEvent& event)
 {
+	switch (event.code)
+	{
+		case SDL_SCANCODE_F:
+			SetFocus(glm::vec3(0.0f, 0.0f, 0.0f));
+			break;
+		default:
+			break;
+	}
+
+	event.handled = true;
 }
 
 void Camera::OnKeyUp(KeyUpEvent& event)

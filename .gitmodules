@@ -11,3 +11,6 @@
 [submodule "dep/sdl"]
 	path = dep/sdl
 	url = https://github.com/libsdl-org/SDL
+[submodule "dep/glm"]
+	path = dep/glm
+	url = https://github.com/g-truc/glm

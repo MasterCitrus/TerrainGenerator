@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include "OpenGL/Framebuffer.h"
+#include "OpenGL/Material.h"
 #include "OpenGL/Mesh.h"
 #include "OpenGL/Shader.h"
 #include "OpenGL/Texture.h"
@@ -16,6 +17,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <numbers>
 
 bool Application::Initialise()
 {
@@ -72,7 +74,7 @@ bool Application::Initialise()
 
     auto path = std::filesystem::current_path();
 
-    
+    camera = new Camera(45.0f, 1.778f, 0.1f, 1000.f);
 
     if (!shader.Load(path.string() + "\\shaders\\mesh.vert", path.string() + "\\shaders\\mesh.frag"))
     {
@@ -86,6 +88,7 @@ bool Application::Initialise()
 
 void Application::Deinitialise()
 {
+    delete camera;
     delete framebuffer;
 
     ImGui_ImplOpenGL3_Shutdown();
@@ -108,7 +111,31 @@ void Application::Run()
     unsigned int frames = 0;
     double fpsInterval = 0;
 
-    mesh = new Mesh(nullptr, MeshShape::Quad);
+    Material mat(&shader);
+
+    auto path = std::filesystem::current_path();
+
+    Texture texture(path.string() + "\\ignoreassets\\random.jpg", TextureType::Colour, TextureWrapping::Repeat, TextureFilter::Linear);
+
+    unsigned char pixels[256 * 256];
+
+    std::random_device rand;
+    std::mt19937 gen(rand());
+    std::uniform_int_distribution<unsigned int> distrib(0, 256);
+
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < 256; j++)
+        {
+            pixels[j * 256 + i] = distrib(gen);
+        }
+    }
+
+    Texture noise(256, 256, pixels, TextureType::Colour, TextureFormat::GS);
+
+    mat.SetTexture(&noise);
+
+    mesh = new Mesh(&mat, MeshShape::Quad);
 
     RegisterListeners();
 
@@ -185,13 +212,13 @@ void Application::Update(float delta)
 
     shader.Bind();
 
-    shader.SetVec("viewPos", camera.GetPosition());
-    shader.SetMat("projection", camera.GetProjectionMatrix());
-    shader.SetMat("view", camera.GetViewMatrix());
+    shader.SetVec("viewPos", camera->GetPosition());
+    shader.SetMat("projection", camera->GetProjectionMatrix());
+    shader.SetMat("view", camera->GetViewMatrix());
 
-    Mat4 model;
-    model.Translate(Vec3(0.0f, 0.0f, 0.0f));
-    model.Scale(Vec3(1.0f, 1.0f, 1.0f));
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(5.0f));
 
     shader.SetMat("model", model);
 
@@ -292,7 +319,7 @@ void Application::Update(float delta)
     if (FBSpec spec = framebuffer->GetSpec(); viewport.x > 0.0f && viewport.y > 0.0f && ((float)spec.width != viewport.x || (float)spec.height != viewport.y))
     {
         framebuffer->Resize((unsigned int)viewport.x, (unsigned int)viewport.y);
-        camera.SetViewportSize(viewport.x, viewport.y);
+        camera->SetViewportSize(viewport.x, viewport.y);
     }
 
 
@@ -307,7 +334,18 @@ void Application::Update(float delta)
 
     ImGui::Begin("GenPanel");
     ImGui::SeparatorText("Generator Panel");
-    ImGui::Text("Mouse Pos: %.2f, %.2f", camera.GetLastMousePos().x, camera.GetLastMousePos().y);
+    ImGui::Text("Seed");
+    ImGui::SameLine();
+    ImGui::InputScalar("##seedinput", ImGuiDataType_U32, &data.seed);
+    ImGui::SameLine();
+    if (ImGui::Button("Random"))
+    {
+        static std::random_device rd;
+        static std::mt19937 mt(rd());
+        std::uniform_int_distribution<unsigned int> distrib(0, std::numeric_limits<unsigned int>::max());
+
+        data.seed = distrib(mt);
+    }
     ImGui::End();
 
     // Generator Panel End
@@ -371,8 +409,10 @@ void Application::ProcessSDLEvents()
 
 void Application::RegisterListeners()
 {
-    bus.Subscribe(EventType::MouseButtonDown, [this](Event& event) { camera.OnEvent(event); });
-    bus.Subscribe(EventType::MouseButtonUp, [this](Event& event) { camera.OnEvent(event); });
-    bus.Subscribe(EventType::MouseMove, [this](Event& event) { camera.OnEvent(event); });
-    bus.Subscribe(EventType::MouseScroll, [this](Event& event) { camera.OnEvent(event); });
+    bus.Subscribe(EventType::MouseButtonDown, [this](Event& event) { camera->OnEvent(event); });
+    bus.Subscribe(EventType::MouseButtonUp, [this](Event& event) { camera->OnEvent(event); });
+    bus.Subscribe(EventType::MouseMove, [this](Event& event) { camera->OnEvent(event); });
+    bus.Subscribe(EventType::MouseScroll, [this](Event& event) { camera->OnEvent(event); });
+    bus.Subscribe(EventType::KeyDown, [this](Event& event) { camera->OnEvent(event); });
+    bus.Subscribe(EventType::KeyUp, [this](Event& event) { camera->OnEvent(event); });
 }

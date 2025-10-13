@@ -1,13 +1,11 @@
 #pragma once
 
-#include <types/math/Vec3.h>
-#include <types/math/Vec2.h>
-
-using namespace Math;
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 struct Vertex
 {
-	Vec3 position;
-	Vec3 normal;
-	Vec2 uv;
+	glm::vec3 position;
+	glm::vec3 normal;
+	glm::vec2 uv;
 };

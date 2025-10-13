@@ -1,15 +1,14 @@
 #pragma once
 
-#include "types/math/Mat3.h"
-#include "types/math/Mat4.h"
-#include "types/math/Quat.h"
-#include "types/math/Utils.h"
-#include "types/math/Vec2.h"
 #include "../Events/Event.h"
 
-#include <utility>
+#include <glm/vec2.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
-using namespace Math;
+#include <utility>
 
 class Camera
 {
@@ -17,38 +16,38 @@ public:
 	Camera() = default;
 	Camera(float fov, float aspectRatio, float nearClip, float farClip);
 
-	const Mat4& GetViewMatrix() const { return view; }
-	Mat4 GetProjectionMatrix() const { return projection; }
+	const glm::mat4& GetViewMatrix() const { return view; }
+	glm::mat4 GetProjectionMatrix() const { return projection; }
 
-	Vec3& GetPosition() { return position; }
-	Quat GetOrientation() const;
+	glm::vec3& GetPosition() { return position; }
+	glm::quat GetOrientation() const;
 
-	Vec3 GetUpVector() const;
-	Vec3 GetRightVector() const;
-	Vec3 GetForwardVector() const;
+	glm::vec3 GetUpVector() const;
+	glm::vec3 GetRightVector() const;
+	glm::vec3 GetForwardVector() const;
 
 	float GetAspectRatio() const { return aspectRatio; }
 
 	void SetViewportSize(float width, float height);
-	void SetFocus(const Vec3& focalPoint);
+	void SetFocus(const glm::vec3& focalPoint);
 
 	void Update(float delta);
 	void OnEvent(Event& event);
 
-	Vec2 GetLastMousePos() const { return lastMousePos; }
+	glm::vec2 GetLastMousePos() const { return lastMousePos; }
 
 private:
 	void UpdateProjection();
 	void UpdateView();
 
-	void Pan(const Vec2& delta);
-	void Rotate(const Vec2& delta);
+	void Pan(const glm::vec2& delta);
+	void Rotate(const glm::vec2& delta);
 	void Zoom(float delta);
 
 	std::pair<float, float> PanSpeed() const;
 	float ZoomSpeed() const;
 
-	Vec3 CalculatePosition() const;
+	glm::vec3 CalculatePosition() const;
 
 	void OnMouseDown(MouseButtonDownEvent& event);
 	void OnMouseUp(MouseButtonUpEvent& event);
@@ -58,15 +57,15 @@ private:
 	void OnKeyUp(KeyUpEvent& event);
 
 private:
-	Mat4 projection = Mat4();
-	Mat4 view;
+	glm::mat4 projection = glm::mat4(1);
+	glm::mat4 view;
 
-	Vec3 focalPoint = { 0.0f, 0.0f, 0.0f };
-	Vec3 position = { 0.0f, 2.0f, 10.0f };
+	glm::vec3 focalPoint = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 position = { 0.0f, 2.0f, 10.0f };
 
-	Vec2 lastMousePos = { 0.0f, 0.0f };
+	glm::vec2 lastMousePos = { 0.0f, 0.0f };
 
-	float pitch = Deg2Rad(30.0f), yaw = 0.0f;
+	float pitch = glm::radians(30.0f), yaw = 0.0f;
 	float distance = 10.0f;
 	float fov = 45.0f;
 	float aspectRatio = 1.778f;

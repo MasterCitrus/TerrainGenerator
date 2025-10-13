@@ -25,4 +25,5 @@ target_include_directories(TerrainGenLib
 target_link_libraries(TerrainGenLib
     PRIVATE
         stb
+		glm
 )

@@ -35,7 +35,7 @@ Mesh::Mesh(Material* material, MeshShape shape)
 	glVertexArrayElementBuffer(VAO, IBO);
 
 	glEnableVertexArrayAttrib(VAO, 0);
-	glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
 	glVertexArrayAttribBinding(VAO, 0, 0);
 	glEnableVertexArrayAttrib(VAO, 1);
 	glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
@@ -79,17 +79,17 @@ Mesh::~Mesh()
 void Mesh::MakeQuad()
 {
 	// Vertex positions
-	Vec3 pos1 = { -0.5f, 0.0f, -0.5f }; // Bottom Left
-	Vec3 pos2 = { 0.5f, 0.0f, -0.5f }; // Bottom Right
-	Vec3 pos3 = { -0.5f, 0.0f, 0.5f }; // Top Left
-	Vec3 pos4 = { 0.5f, 0.0f, 0.5f }; // Top Right
+	glm::vec3 pos1 = { -0.5f, 0.0f, -0.5f }; // Bottom Left
+	glm::vec3 pos2 = { 0.5f, 0.0f, -0.5f }; // Bottom Right
+	glm::vec3 pos3 = { -0.5f, 0.0f, 0.5f }; // Top Left
+	glm::vec3 pos4 = { 0.5f, 0.0f, 0.5f }; // Top Right
 
-	Vec3 norm = { 0.0f, 1.0f, 0.0f }; // Y up
+	glm::vec3 norm = { 0.0f, 1.0f, 0.0f }; // Y up
 
-	Vec2 uv1 = { 0.0f, 0.0f }; // Bottom Left
-	Vec2 uv2 = { 1.0f, 0.0f }; // Bottom Right
-	Vec2 uv3 = { 0.0f, 1.0f }; // Top Left
-	Vec2 uv4 = { 1.0f, 1.0f }; // Top Right
+	glm::vec2 uv1 = { 0.0f, 0.0f }; // Bottom Left
+	glm::vec2 uv2 = { 1.0f, 0.0f }; // Bottom Right
+	glm::vec2 uv3 = { 0.0f, 1.0f }; // Top Left
+	glm::vec2 uv4 = { 1.0f, 1.0f }; // Top Right
 
 	Vertex bottomLeft = { pos1, norm, uv1 };
 	Vertex bottomRight = { pos2, norm, uv2 };
@@ -118,6 +118,7 @@ void Mesh::MakeIcoSphere()
 
 void Mesh::Draw()
 {
+	material->Apply();
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 	glBindVertexArray(0);

@@ -1,4 +1,5 @@
 #include "types/math/Mat4.h"
+#include "types/math/Utils.h"
 
 #include <cmath>
 #include <numbers>
@@ -93,13 +94,13 @@ Mat4 Math::Mat4::Scale(const Vec3& scale)
 
 Mat4 Math::Mat4::Perspective(float fov, float aspect, float near, float far) const
 {
-    fov *= (std::numbers::pi / 180.0f);
-    float f = 1.0f / std::tan(fov * 0.5f);
-    float nf = 1.0f / (near - far);
-    return Mat4(f / aspect, 0.f, 0.f, 0.f,
+    float fovR = Deg2Rad(fov);
+    float f = 1.0f / std::tan(fovR * 0.5f);
+    float range = near - far;
+    return Mat4(1.0f / (f * aspect), 0.f, 0.f, 0.f,
                 0.f, f, 0.f, 0.f,
-                0.f, 0.f, (far + near) * nf, -1.f,
-                0.f, 0.f, 2 * far * near * nf, 0.f);
+                0.f, 0.f, (-near - far) / range, -1.f,
+                0.f, 0.f, (2 * far * near) / range, 0.f);
 }
 
 Mat4 Math::Mat4::Orthographic(float left, float right, float bottom, float top, float near, float far) const

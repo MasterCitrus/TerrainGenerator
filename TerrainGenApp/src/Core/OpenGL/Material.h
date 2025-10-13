@@ -10,6 +10,8 @@ public:
 
 	void SetTexture(Texture* texture);
 
+	void Apply();
+
 private:
 	Shader* shader = nullptr;
 	Texture* texture = nullptr;

@@ -202,32 +202,32 @@ void Shader::SetFloat(const std::string& name, float v1, float v2, float v3, flo
 	glUniform4f(glGetUniformLocation(shaderID, name.c_str()), v1, v2, v3, v4);
 }
 
-void Shader::SetVec(const std::string& name, const Vec2& value) const
+void Shader::SetVec(const std::string& name, const glm::vec2& value) const
 {
 	glUniform2fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
 }
 
-void Shader::SetVec(const std::string& name, const Vec3& value) const
+void Shader::SetVec(const std::string& name, const glm::vec3& value) const
 {
 	glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
 }
 
-void Shader::SetVec(const std::string& name, const Vec4& value) const
+void Shader::SetVec(const std::string& name, const glm::vec4& value) const
 {
 	glUniform4fv(glGetUniformLocation(shaderID, name.c_str()), 1, &value[0]);
 }
 
-void Shader::SetMat(const std::string& name, const Mat2& value) const
+void Shader::SetMat(const std::string& name, const glm::mat2& value) const
 {
 	glUniformMatrix2fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
-void Shader::SetMat(const std::string& name, const Mat3& value) const
+void Shader::SetMat(const std::string& name, const glm::mat3& value) const
 {
 	glUniformMatrix3fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
-void Shader::SetMat(const std::string& name, const Mat4& value) const
+void Shader::SetMat(const std::string& name, const glm::mat4& value) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
