@@ -129,3 +129,8 @@ Vec2 Math::Vec2::Perpendicular() const
 {
     return Vec2(-y, x);
 }
+
+Vec2 Math::Vec2::Zero()
+{
+    return Vec2(0.0f, 0.0f);
+}

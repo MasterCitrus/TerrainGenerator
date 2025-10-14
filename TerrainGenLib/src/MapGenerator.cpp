@@ -45,7 +45,7 @@ Float2D MapGenerator::GenerateNoiseMap(float scale, unsigned int octaves, float 
 
 			for (unsigned int i = 0; i < octaves; i++)
 			{
-				float sampleX = (x - halfWidth) / scale * frequency + ((octaveOffsets.size() > 0) ? octaveOffsets[i].x : 0);
+				float sampleX = (x - halfWidth) / scale * frequency + ((octaveOffsets.size() > 0) ? -octaveOffsets[i].x : 0);
 				float sampleY = (y - halfHeight) / scale * frequency + ((octaveOffsets.size() > 0) ? octaveOffsets[i].y : 0);
 
 				float value = perlin.Noise(sampleX, sampleY) * 2 - 1;

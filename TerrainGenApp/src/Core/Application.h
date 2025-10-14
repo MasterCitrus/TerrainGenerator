@@ -51,4 +51,7 @@ private:
 	bool running = false;
 	bool showDemoWindow = false;
 	bool autoUpdateGenerator = false;
+	bool viewportHovered = false;
+	bool viewportFocused = false;
+	bool pixelate = false;
 };

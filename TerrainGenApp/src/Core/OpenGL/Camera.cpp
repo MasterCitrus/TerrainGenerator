@@ -240,6 +240,9 @@ void Camera::OnKeyDown(KeyDownEvent& event)
 		case SDL_SCANCODE_F:
 			SetFocus(glm::vec3(0.0f, 0.0f, 0.0f));
 			break;
+		case SDL_SCANCODE_1:
+
+			break;
 		default:
 			break;
 	}

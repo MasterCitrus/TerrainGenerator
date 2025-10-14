@@ -40,5 +40,7 @@ namespace Math
 		Vec2 Normalised() const;
 
 		Vec2 Perpendicular() const;
+
+		static Vec2 Zero();
 	};
 }
