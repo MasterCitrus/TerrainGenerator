@@ -14,10 +14,28 @@
 #include <imgui_internal.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_opengl3.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 #include <chrono>
 #include <cmath>
 #include <numbers>
+
+static int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
+{
+    if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+    {
+        std::string str = (const char*)data->UserData;
+    }
+    return 0;
+}
+
+const std::vector<TerrainType> defaultRegions = {
+    {"Water", Vec3(0.0f, 0.0f, 1.0f), 0.2f},
+    {"Sand", Vec3(0.98f, 0.86f, 0.0f), 0.52f},
+    {"Land", Vec3(0.0f, 0.42f, 0.0f), 0.6f},
+    {"Mountain", Vec3(0.15f, 0.15f, 0.15f), 0.8f},
+    {"Snow", Vec3(1.0f, 1.0f, 1.0f), 1.0f},
+};
 
 bool Application::Initialise()
 {
@@ -76,7 +94,8 @@ bool Application::Initialise()
 
     camera = new Camera(45.0f, 1.778f, 0.1f, 1000.f);
 
-    meshTexture = new Texture;
+    heightMap = new Texture;
+    colourMap = new Texture;
 
     if (!shader.Load(rootDir.string() + "\\shaders\\mesh.vert", rootDir.string() + "\\shaders\\mesh.frag"))
     {
@@ -92,7 +111,8 @@ void Application::Deinitialise()
 {
     delete camera;
     delete framebuffer;
-    delete meshTexture;
+    delete heightMap;
+    delete colourMap;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
@@ -116,7 +136,7 @@ void Application::Run()
 
     Material mat(&shader);
 
-    mat.SetTexture(meshTexture);
+    mat.SetTexture(heightMap);
 
     mesh = new Mesh(&mat, MeshShape::Quad);
 
@@ -489,7 +509,7 @@ void Application::Update(float delta)
             ImGui::Text("Lacunarity");
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(-1.0f);
-            ImGui::DragFloat("##lacunarity", &data.lacunarity, 0.01f, 0.0f, 100.0f, "%.2f");
+            ImGui::DragFloat("##lacunarity", &data.lacunarity, 0.01f, 1.0f, 100.0f, "%.2f");
             ImGui::TableSetColumnIndex(2);
             if (ImGui::Button("Default##lacunarity"))
             {
@@ -532,6 +552,40 @@ void Application::Update(float delta)
             ImGui::EndTable();
         }
 
+        ImGui::SeparatorText("Regions");
+        ImGui::Text("Number of Regions: %i", terrainTypes.size());
+        for (int i = 0; i < terrainTypes.size(); i++)
+        {
+            if (ImGui::CollapsingHeader((terrainTypes[i].name + "##" + std::to_string(i)).c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::Text("Name");
+                ImGui::SameLine();
+                ImGui::InputText(("##regionname" + std::to_string(i)).c_str(), &terrainTypes[i].name, 0, InputTextResizeCallback);
+                ImGui::Text("Colour");
+                ImGui::SameLine();
+                ImGui::ColorEdit3(("##regioncolour" + std::to_string(i)).c_str(), &terrainTypes[i].colour[0]);
+                ImGui::Text("Height");
+                ImGui::SameLine();
+                ImGui::InputFloat(("##regionheight" + std::to_string(i)).c_str(), &terrainTypes[i].height);
+            }
+        }
+        if (ImGui::Button("Add Region"))
+        {
+            TerrainType type("Temp", Vec3(0.0f, 0.0f, 0.0f), 0.0f);
+            terrainTypes.push_back(type);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Clear Regions"))
+        {
+            terrainTypes.clear();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Default Regions"))
+        {
+            terrainTypes = defaultRegions;
+        }
+        ImGui::Separator();
+
         ///////////////////////////////////////
         ////// Generate Button ////////////////
         ///////////////////////////////////////
@@ -560,7 +614,9 @@ void Application::Update(float delta)
     if(ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Text("Height Map");
-        ImGui::Image(meshTexture->GetID(), ImVec2(panelSize.x, panelSize.x));
+        ImGui::Image(heightMap->GetID(), ImVec2(panelSize.x, panelSize.x));
+        ImGui::Text("Colour Map");
+        ImGui::Image(colourMap->GetID(), ImVec2(panelSize.x, panelSize.x));
     }
     ImGui::End();
 
@@ -573,6 +629,24 @@ void Application::Update(float delta)
             GenerateTerrain();
             dataLastFrame = data;
         }
+    }
+
+    switch (displayType)
+    {
+        case DisplayType::HeightMap:
+            if(mesh->GetMaterial()->GetTexture() != heightMap)
+            {
+                mesh->GetMaterial()->SetTexture(heightMap);
+            }
+            break;
+        case DisplayType::ColourMap:
+            if (mesh->GetMaterial()->GetTexture() != colourMap)
+            {
+                mesh->GetMaterial()->SetTexture(colourMap);
+            }
+            break;
+        default:
+            break;
     }
 }
 
@@ -677,29 +751,39 @@ void Application::GenerateTerrain()
 {
     MapGenerator generator;
 
-    auto map = generator.GenerateNoiseMap(noiseType, data.noiseScale, data.octaves, data.persistence, data.lacunarity, data.offset, data.seed);
+    auto map = generator.GenerateMap(noiseType, terrainTypes, data.noiseScale, data.octaves, data.persistence, data.lacunarity, data.offset, data.seed);
 
-    unsigned int size = map.size();
+    unsigned int heightMapSize = map.heightMap.size();
+    unsigned int colourMapSize = map.colourMap.size();
 
-    std::vector<unsigned char> pixels(size * size);
+    std::vector<unsigned char> height(heightMapSize * heightMapSize);
+    std::vector<unsigned char> colour(colourMapSize * 3);
 
     int k = 0;
-    for (int y = 0; y < size; y++)
+    for (int y = 0; y < heightMapSize; y++)
     {
-        for (int x = 0; x < size; x++)
+        for (int x = 0; x < heightMapSize; x++)
         {
-            pixels[k] = std::floor(map[y][x] * 255);
+            height[k] = std::floor(map.heightMap[y][x] * 255);
             k++;
         }
+    }
+    for (int i = 0; i < colourMapSize; i++)
+    {
+        colour[i * 3 + 0] = std::floor(map.colourMap[i].x * 255);
+        colour[i * 3 + 1] = std::floor(map.colourMap[i].y * 255);
+        colour[i * 3 + 2] = std::floor(map.colourMap[i].z * 255);
     }
 
     if (pixelate)
     {
-        meshTexture->Create(size, size, pixels.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::Repeat, TextureFilter::Nearest);
+        heightMap->Create(heightMapSize, heightMapSize, height.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::Repeat, TextureFilter::Nearest);
+        colourMap->Create(heightMapSize, heightMapSize, colour.data(), TextureType::Colour, TextureFormat::RGB, TextureWrapping::Repeat, TextureFilter::Nearest);
     }
     else
     {
-        meshTexture->Create(size, size, pixels.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::Repeat, TextureFilter::Linear);
+        heightMap->Create(heightMapSize, heightMapSize, height.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::Repeat, TextureFilter::Linear);
+        colourMap->Create(heightMapSize, heightMapSize, colour.data(), TextureType::Colour, TextureFormat::RGB, TextureWrapping::Repeat, TextureFilter::Linear);
     }
 }
 

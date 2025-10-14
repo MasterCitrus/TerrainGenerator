@@ -1,5 +1,5 @@
-#include "types/math/Mat4.h"
-#include "types/math/Utils.h"
+#include "terraingen/types/math/Mat4.h"
+#include "terraingen/types/math/Utils.h"
 
 #include <cmath>
 #include <numbers>

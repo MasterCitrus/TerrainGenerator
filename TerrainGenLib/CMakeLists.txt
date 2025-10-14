@@ -26,4 +26,5 @@ target_link_libraries(TerrainGenLib
     PRIVATE
         stb
 		glm
+		assimp
 )

@@ -5,10 +5,12 @@
 #include "OpenGL/Camera.h"
 #include "OpenGL/Shader.h"
 
-#include <MapGenerator.h>
+#include <terraingen/MapGenerator.h>
+#include <terraingen/types/TerrainType.h>
 
 #include <filesystem>
 #include <random>
+#include <vector>
 
 class Framebuffer;
 class Mesh;
@@ -56,13 +58,15 @@ private:
 private:
 	EventBus cameraEvents;
 	EventBus appEvents;
+	std::vector<TerrainType> terrainTypes;
 	std::filesystem::path rootDir;
 	GeneratorData data;
 	GeneratorData dataLastFrame;
 	SDL_Window* window;
 	Camera* camera;
 	Mesh* mesh;
-	Texture* meshTexture;
+	Texture* heightMap;
+	Texture* colourMap;
 	Framebuffer* framebuffer;
 	SDL_GLContext context;
 	unsigned int fps = 0;

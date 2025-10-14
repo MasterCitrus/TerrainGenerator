@@ -1,4 +1,4 @@
-#include "types/math/Vec4.h"
+#include "terraingen/types/math/Vec4.h"
 
 #include <cmath>
 

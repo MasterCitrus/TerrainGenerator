@@ -1,4 +1,4 @@
-#include "types/math/Quat.h"
+#include "terraingen/types/math/Quat.h"
 
 #include <cmath>
 

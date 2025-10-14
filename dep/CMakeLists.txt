@@ -8,6 +8,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/sdl/CMakeLists.txt")
     add_subdirectory(sdl)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assimp/CMakeLists.txt")
+    add_subdirectory(assimp)
+endif()
+
 add_library(glad STATIC glad/src/glad.c)
 target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glad/include)
 
@@ -25,6 +29,7 @@ add_library(imgui STATIC
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_widgets.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_sdl3.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui/misc/cpp/imgui_stdlib.cpp
 )
 target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 target_link_libraries(imgui PUBLIC SDL3::SDL3)

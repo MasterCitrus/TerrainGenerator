@@ -1,11 +1,22 @@
-#include "MapGenerator.h"
-#include "types/math/Utils.h"
+#include "terraingen/MapGenerator.h"
+#include "terraingen/types/math/Utils.h"
 
 #include <random>
 
 MapGenerator::MapGenerator()
 {
 	perlin = Perlin();
+}
+
+MapData MapGenerator::GenerateMap(NoiseType noiseType, const std::vector<TerrainType>& regions, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed)
+{
+	MapData mapData;
+
+	mapData.heightMap = GenerateNoiseMap(noiseType, scale, octaves, persistence, lacunarity, offset, seed);
+	mapData.colourMap = GenerateColourMap(mapData.heightMap, regions);
+	mapData.size = mapData.heightMap.size();
+
+	return mapData;
 }
 
 Float2D MapGenerator::GenerateNoiseMap(NoiseType noiseType, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed)
@@ -30,6 +41,33 @@ Float2D MapGenerator::GenerateNoiseMap(NoiseType noiseType, float scale, unsigne
 	}
 	
 	return map;
+}
+
+std::vector<Vec3> MapGenerator::GenerateColourMap(const Float2D& map, const std::vector<TerrainType>& regions)
+{
+	std::vector<Vec3> colourMap(256 * 256);
+
+	for (int y = 0; y < 256; y++)
+	{
+		for (int x = 0; x < 256; x++)
+		{
+			float currentHeight = map[y][x];
+			for (int i = 0; i < regions.size(); i++)
+			{
+				if (currentHeight <= regions[i].height)
+				{
+					colourMap[y * 256 + x] = regions[i].colour;
+					break;
+				}
+			}
+			if (regions.empty())
+			{
+				colourMap[y * 256 + x] = Vec3(0.0f, 0.0f, 0.0f);
+			}
+		}
+	}
+
+	return colourMap;
 }
 
 void MapGenerator::PerlinMap(Float2D& map, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed)

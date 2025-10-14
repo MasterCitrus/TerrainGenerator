@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types/math/Vec2.h"
+#include "terraingen/types/math/Vec2.h"
 #include <cstdint>
 
 enum class DisplayType : uint8_t

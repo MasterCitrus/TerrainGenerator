@@ -6,11 +6,16 @@
 
 using namespace Math;
 
+typedef std::vector<std::vector<float>> Float2D;
+
 struct MapData
 {
-	std::vector<float> heightMap;
+	Float2D heightMap;
 	std::vector<Vec3> colourMap;
+	unsigned int size;
 
-	inline MapData(std::vector<float> heightMap, std::vector<Vec3> colourMap)
+	MapData() = default;
+
+	inline MapData(Float2D heightMap, std::vector<Vec3> colourMap)
 		: heightMap(heightMap), colourMap(colourMap) { }
 };

@@ -1,11 +1,5 @@
 #include "Shader.h"
 
-#include <types/math/Vec2.h>
-#include <types/math/Vec3.h>
-#include <types/math/Vec4.h>
-#include <types/math/Mat2.h>
-#include <types/math/Mat3.h>
-#include <types/math/Mat4.h>
 #include <glad/glad.h>
 
 #include <fstream>

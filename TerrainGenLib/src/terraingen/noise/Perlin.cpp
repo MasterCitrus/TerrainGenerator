@@ -1,4 +1,4 @@
-#include "noise/Perlin.h"
+#include "terraingen/noise/Perlin.h"
 
 #include <algorithm>
 #include <cmath>

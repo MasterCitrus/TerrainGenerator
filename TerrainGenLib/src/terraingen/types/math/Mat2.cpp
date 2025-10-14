@@ -1,4 +1,4 @@
-#include "types/math/Mat2.h"
+#include "terraingen/types/math/Mat2.h"
 
 #include <cmath>
 

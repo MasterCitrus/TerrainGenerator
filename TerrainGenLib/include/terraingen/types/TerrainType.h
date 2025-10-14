@@ -1,0 +1,11 @@
+#pragma once
+#include <terraingen/types/math/Vec3.h>
+
+#include <string>
+
+struct TerrainType
+{
+	std::string name;
+	Math::Vec3 colour;
+	float height;
+};

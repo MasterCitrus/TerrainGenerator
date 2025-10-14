@@ -8,6 +8,7 @@ class Material
 public:
 	Material(Shader* shader);
 
+	Texture* GetTexture() const { return texture; }
 	void SetTexture(Texture* texture);
 
 	void Apply();
