@@ -1,6 +1,18 @@
 #pragma once
 
 #include "types/math/Vec2.h"
+#include <cstdint>
+
+enum class DisplayType : uint8_t
+{
+	HeightMap = 0,
+	ColourMap,
+	Mesh,
+};
+
+extern const char* displayTypeNames[3];
+
+extern const char* noiseTypeNames[2];
 
 struct GeneratorData
 {

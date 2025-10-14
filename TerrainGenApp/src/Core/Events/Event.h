@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL_scancode.h>
+#include <SDL3/SDL_keycode.h>
 
 enum class EventType
 {
@@ -25,24 +26,25 @@ public:
 class KeyEvent : public Event
 {
 public:
-	KeyEvent(SDL_Scancode code, bool rep) : code(code), repeat(rep) {}
+	KeyEvent(SDL_Scancode code, SDL_Keymod mod, bool rep) : code(code), mod(mod), repeat(rep) {}
 
 public:
 	SDL_Scancode code;
+	SDL_Keymod mod;
 	bool repeat;
 };
 
 class KeyDownEvent : public KeyEvent
 {
 public:
-	KeyDownEvent(SDL_Scancode code, bool rep) : KeyEvent(code, rep) {}
+	KeyDownEvent(SDL_Scancode code, SDL_Keymod mod = SDL_KMOD_NONE, bool rep = false) : KeyEvent(code, mod, rep) {}
 	EventType GetType() const override { return EventType::KeyDown; }
 };
 
 class KeyUpEvent : public KeyEvent
 {
 public:
-	KeyUpEvent(SDL_Scancode code, bool rep) : KeyEvent(code, rep) {}
+	KeyUpEvent(SDL_Scancode code, SDL_Keymod mod = SDL_KMOD_NONE, bool rep = false) : KeyEvent(code, mod, rep) {}
 	EventType GetType() const override { return EventType::KeyUp; }
 };
 

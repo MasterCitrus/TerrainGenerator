@@ -6,8 +6,6 @@
 #include "OpenGL/Shader.h"
 #include "OpenGL/Texture.h"
 
-#include <MapGenerator.h>
-
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
@@ -19,7 +17,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <filesystem>
 #include <numbers>
 
 bool Application::Initialise()
@@ -75,13 +72,13 @@ bool Application::Initialise()
         return false;
     }
 
-    auto path = std::filesystem::current_path();
+    rootDir = std::filesystem::current_path();
 
     camera = new Camera(45.0f, 1.778f, 0.1f, 1000.f);
 
     meshTexture = new Texture;
 
-    if (!shader.Load(path.string() + "\\shaders\\mesh.vert", path.string() + "\\shaders\\mesh.frag"))
+    if (!shader.Load(rootDir.string() + "\\shaders\\mesh.vert", rootDir.string() + "\\shaders\\mesh.frag"))
     {
         return false;
     }
@@ -289,6 +286,28 @@ void Application::Update(float delta)
 
     if (ImGui::BeginMainMenuBar())
     {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New Terrain", "Ctrl + N"))
+            {
+                Reset();
+            }
+            if (ImGui::MenuItem("Load Terrain", "Ctrl + O"))
+            {
+                Open();
+            }
+            if (ImGui::MenuItem("Save Terrain", "Ctrl + S"))
+            {
+                Save();
+            }
+            if (ImGui::BeginMenu("Export Terrain"))
+            {
+
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMenu();
+        }
         if (ImGui::BeginMenu("Options"))
         {
             ImGui::Checkbox("##showdemowindow", &showDemoWindow);
@@ -325,145 +344,224 @@ void Application::Update(float delta)
     ImGui::Begin("GenPanel");
     ImVec2 panelSize = ImGui::GetContentRegionAvail();
     ImGui::SeparatorText("Generator Panel");
-    if (ImGui::BeginTable("GenSettings", 3, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersOuterH))
+    if(ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-        ImGui::TableSetupColumn("Input", ImGuiTableColumnFlags_WidthStretch, 100.0f);
-        ImGui::TableSetupColumn("Buttons", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-        ///////////////////////////////////////
-        ////// Seed ///////////////////////////
-        ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Seed");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::SetNextItemWidth(-1.0f);
-        ImGui::InputScalar("##seedinput", ImGuiDataType_U32, &data.seed);
-        ImVec2 seedDragSize = ImGui::GetItemRectSize();
-        ImGui::TableSetColumnIndex(2);
-        ImVec2 seedColumnWidth = ImGui::GetContentRegionAvail();
-        if (ImGui::Button("Random", ImVec2(seedColumnWidth.x - 3.0f, seedDragSize.y)))
+        // Drop down table
+        if (ImGui::BeginTable("Dropdowns", 2))
         {
-            static std::random_device rd;
-            static std::mt19937 mt(rd());
-            std::uniform_int_distribution<unsigned int> distrib(0, std::numeric_limits<unsigned int>::max());
+            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableSetupColumn("Dropdown", ImGuiTableColumnFlags_WidthStretch, 100.0f);
 
-            data.seed = distrib(mt);
+            // Display Type Select
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Display Type");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            if (ImGui::BeginCombo("##displaytype", displayTypeNames[(uint8_t)displayType]))
+            {
+                for (int i = 0; i < IM_ARRAYSIZE(displayTypeNames); ++i)
+                {
+                    const bool isSelected = (displayType == static_cast<DisplayType>(i));
+                    if (ImGui::Selectable(displayTypeNames[i], isSelected))
+                    {
+                        displayType = static_cast<DisplayType>(i);
+                    }
+
+                    if (isSelected)
+                    {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            // Noise Type Select
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Noise Type");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            if (ImGui::BeginCombo("##noisetype", noiseTypeNames[(uint8_t)noiseType]))
+            {
+                for (int i = 0; i < IM_ARRAYSIZE(noiseTypeNames); ++i)
+                {
+                    const bool isSelected = (noiseType == static_cast<NoiseType>(i));
+                    if (ImGui::Selectable(noiseTypeNames[i], isSelected))
+                    {
+                        noiseType = static_cast<NoiseType>(i);
+                        GenerateTerrain();
+                    }
+
+                    if (isSelected)
+                    {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            ImGui::EndTable();
         }
-        ///////////////////////////////////////
-        ////// Noise Scale ////////////////////
-        ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Noise Scale");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::SetNextItemWidth(-1.0f);
-        ImGui::DragFloat("##noisescale", &data.noiseScale, 0.01f, 1.0f, 200.0f, "%.2f");
-        ImGui::TableSetColumnIndex(2);
-        if (ImGui::Button("Default##seed"))
+        // Settings Table
+        if (ImGui::BeginTable("GenSettings", 3, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersOuterH))
         {
-            data.seed = 20.0f;
+            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+            ImGui::TableSetupColumn("Input", ImGuiTableColumnFlags_WidthStretch, 100.0f);
+            ImGui::TableSetupColumn("Buttons", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+            ///////////////////////////////////////
+            ////// Seed ///////////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Seed");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            ImGui::InputScalar("##seedinput", ImGuiDataType_U32, &data.seed);
+            ImVec2 seedDragSize = ImGui::GetItemRectSize();
+            ImGui::TableSetColumnIndex(2);
+            ImVec2 seedColumnWidth = ImGui::GetContentRegionAvail();
+            if (ImGui::Button("Random", ImVec2(seedColumnWidth.x - 3.0f, seedDragSize.y)))
+            {
+                static std::random_device rd;
+                static std::mt19937 mt(rd());
+                std::uniform_int_distribution<unsigned int> distrib(0, std::numeric_limits<unsigned int>::max());
+
+                data.seed = distrib(mt);
+            }
+            ///////////////////////////////////////
+            ////// Noise Scale ////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Noise Scale");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            ImGui::DragFloat("##noisescale", &data.noiseScale, 0.01f, 1.0f, 200.0f, "%.2f");
+            ImGui::TableSetColumnIndex(2);
+            if (ImGui::Button("Default##seed"))
+            {
+                data.seed = 20.0f;
+            }
+            ///////////////////////////////////////
+            ////// Octaves ////////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Octaves");
+            ImGui::TableSetColumnIndex(1);
+            unsigned int minValue = 1;
+            unsigned int maxValue = 15;
+            ImGui::SetNextItemWidth(-1.0f);
+            ImGui::DragScalar("##octaves", ImGuiDataType_U32, &data.octaves, 1.0f, &minValue, &maxValue);
+            ImVec2 octaveDragSize = ImGui::GetItemRectSize();
+            ImGui::TableSetColumnIndex(2);
+            ImVec2 octaveColumnWidth = ImGui::GetContentRegionAvail();
+            if (ImGui::Button("-", ImVec2((octaveColumnWidth.x * .5f) - 2.5f, octaveDragSize.y)))
+            {
+                data.octaves--;
+                if (data.octaves < 1) data.octaves = 1;
+            }
+            ImGui::SameLine(0.0f, 2.0f);
+            if (ImGui::Button("+", ImVec2((octaveColumnWidth.x * .5f) - 2.5f, octaveDragSize.y)))
+            {
+                data.octaves++;
+                if (data.octaves > 15) data.octaves = 15;
+            }
+            ///////////////////////////////////////
+            ////// Persistence ///////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Persistence");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            ImGui::SliderFloat("##persistence", &data.persistence, 0.0f, 1.0f, "%.2f");
+            ImGui::TableSetColumnIndex(2);
+            if (ImGui::Button("Default##persistence"))
+            {
+                data.persistence = 0.5f;
+            }
+            ///////////////////////////////////////
+            ////// Lacunarity /////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Lacunarity");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            ImGui::DragFloat("##lacunarity", &data.lacunarity, 0.01f, 0.0f, 100.0f, "%.2f");
+            ImGui::TableSetColumnIndex(2);
+            if (ImGui::Button("Default##lacunarity"))
+            {
+                data.lacunarity = 2.0f;
+            }
+            ///////////////////////////////////////
+            ////// Offset /////////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Offset");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            ImGui::DragFloat2("##offset", &data.offset[0], 0.01f, 0.0f, 0.0f, "%.2f");
+            ImGui::TableSetColumnIndex(2);
+            if (ImGui::Button("Default##offset"))
+            {
+                data.offset = Vec2::Zero();
+            }
+            ///////////////////////////////////////
+            ////// Auto Update ////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Auto Update");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Checkbox("##autoupdate", &autoUpdateGenerator);
+            ///////////////////////////////////////
+            ////// Pixelate ///////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Pixelate");
+            ImGui::TableSetColumnIndex(1);
+            if (ImGui::Checkbox("##pixelate", &pixelate))
+            {
+                GenerateTerrain();
+            }
+
+            ImGui::EndTable();
         }
+
         ///////////////////////////////////////
-        ////// Octaves ////////////////////////
+        ////// Generate Button ////////////////
         ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Octaves");
-        ImGui::TableSetColumnIndex(1);
-        unsigned int minValue = 1;
-        unsigned int maxValue = 15;
-        ImGui::SetNextItemWidth(-1.0f);
-        ImGui::DragScalar("##octaves", ImGuiDataType_U32, &data.octaves, 1.0f, &minValue, &maxValue);
-        ImVec2 octaveDragSize = ImGui::GetItemRectSize();
-        ImGui::TableSetColumnIndex(2);
-        ImVec2 octaveColumnWidth = ImGui::GetContentRegionAvail();
-        if (ImGui::Button("-", ImVec2((octaveColumnWidth.x * .5f) - 2.5f, octaveDragSize.y)))
-        {
-            data.octaves--;
-            if (data.octaves < 1) data.octaves = 1;
-        }
-        ImGui::SameLine(0.0f, 2.0f);
-        if (ImGui::Button("+", ImVec2((octaveColumnWidth.x * .5f) - 2.5f, octaveDragSize.y)))
-        {
-            data.octaves++;
-            if (data.octaves > 15) data.octaves = 15;
-        }
-        ///////////////////////////////////////
-        ////// Persistence ///////////////////
-        ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Persistence");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::SetNextItemWidth(-1.0f);
-        ImGui::SliderFloat("##persistence", &data.persistence, 0.0f, 1.0f);
-        ImGui::TableSetColumnIndex(2);
-        if (ImGui::Button("Default##persistence"))
-        {
-            data.persistence = 0.5f;
-        }
-        ///////////////////////////////////////
-        ////// Lacunarity /////////////////////
-        ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Lacunarity");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::SetNextItemWidth(-1.0f);
-        ImGui::DragFloat("##lacunarity", &data.lacunarity, 0.01f, 0.0f, 100.0f);
-        ImGui::TableSetColumnIndex(2);
-        if (ImGui::Button("Default##lacunarity"))
-        {
-            data.lacunarity = 2.0f;
-        }
-        ///////////////////////////////////////
-        ////// Offset /////////////////////////
-        ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Offset");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::SetNextItemWidth(-1.0f);
-        ImGui::DragFloat2("##offset", &data.offset[0], 0.01f);
-        ImGui::TableSetColumnIndex(2);
-        if (ImGui::Button("Default##offset"))
-        {
-            data.offset = Vec2::Zero();
-        }
-        ///////////////////////////////////////
-        ////// Auto Update ////////////////////
-        ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Auto Update");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Checkbox("##autoupdate", &autoUpdateGenerator);
-        ///////////////////////////////////////
-        ////// Pixelate ///////////////////////
-        ///////////////////////////////////////
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Pixelate");
-        ImGui::TableSetColumnIndex(1);
-        if (ImGui::Checkbox("##pixelate", &pixelate))
+        if (ImGui::Button("Generate", ImVec2(panelSize.x, ImGui::CalcTextSize("Generate").y + ImGui::GetStyle().FramePadding.x * 2.0f)))
         {
             GenerateTerrain();
         }
-        
-        ImGui::EndTable();
-    }
+        // Generate Random Button
+        if (ImGui::Button("Generate Random", ImVec2(panelSize.x, ImGui::CalcTextSize("Generate Random").y + ImGui::GetStyle().FramePadding.x * 2.0f)))
+        {
+            static std::random_device rd;
+            static std::mt19937 mt(rd());
+            std::uniform_int_distribution<unsigned int> seedR(0, std::numeric_limits<unsigned int>::max());
+            std::uniform_int_distribution<unsigned int> octavesR(2, 6);
+            std::uniform_real_distribution<float> noiseScaleR(10.0f, 50.0f);
+            std::uniform_real_distribution<float> offsetR(-10000.0f, 10000.0f);
 
-    ///////////////////////////////////////
-    ////// Generate Button ////////////////
-    ///////////////////////////////////////
-    if (ImGui::Button("Generate", ImVec2(panelSize.x, ImGui::CalcTextSize("Generate").y + ImGui::GetStyle().FramePadding.x * 2.0f)))
-    {
-        GenerateTerrain();
+            data.seed = seedR(mt);
+            data.noiseScale = noiseScaleR(mt);
+            data.octaves = octavesR(mt);
+            data.offset = { offsetR(mt), offsetR(mt) };
+
+            GenerateTerrain();
+        }
     }
-    ImGui::SeparatorText("Textures");
-    ImGui::Text("Height Map");
-    ImGui::Image(meshTexture->GetID(), ImVec2(panelSize.x, panelSize.x));
+    if(ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Text("Height Map");
+        ImGui::Image(meshTexture->GetID(), ImVec2(panelSize.x, panelSize.x));
+    }
     ImGui::End();
 
     // Generator Panel End
@@ -478,6 +576,27 @@ void Application::Update(float delta)
     }
 }
 
+
+void Application::OnEvent(Event& event)
+{
+    switch (event.GetType())
+    {
+        case EventType::KeyDown:
+        {
+            auto& ev = static_cast<KeyDownEvent&>(event);
+            OnKeyDown(ev);
+            break;
+        }
+        case EventType::KeyUp:
+        {
+            auto& ev = static_cast<KeyUpEvent&>(event);
+            OnKeyUp(ev);
+            break;
+        }
+        default:
+            break;
+    }
+}
 
 void Application::ProcessSDLEvents()
 {
@@ -494,20 +613,22 @@ void Application::ProcessSDLEvents()
                 break;
             case SDL_EVENT_KEY_DOWN:
             {
-                KeyDownEvent e(event.key.scancode, event.key.repeat);
-                bus.Dispatch(e);
+                KeyDownEvent e(event.key.scancode, event.key.mod, event.key.repeat);
+                cameraEvents.Dispatch(e);
+                appEvents.Dispatch(e);
                 break;
             }
             case SDL_EVENT_KEY_UP:
             {
-                KeyUpEvent e(event.key.scancode, false);
-                bus.Dispatch(e);
+                KeyUpEvent e(event.key.scancode, event.key.mod);
+                cameraEvents.Dispatch(e);
+                appEvents.Dispatch(e);
                 break;
             }
             case SDL_EVENT_MOUSE_MOTION:
             {
                 MouseMoveEvent e(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
-                bus.Dispatch(e);
+                cameraEvents.Dispatch(e);
                 break;
             }
             case SDL_EVENT_MOUSE_WHEEL:
@@ -515,20 +636,20 @@ void Application::ProcessSDLEvents()
                 if (viewportHovered)
                 {
                     MouseScrollEvent e(event.wheel.x, event.wheel.y);
-                    bus.Dispatch(e);
+                    cameraEvents.Dispatch(e);
                 }
                 break;
             }
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
             {
                 MouseButtonDownEvent e(event.button.button, event.button.x, event.button.y);
-                bus.Dispatch(e);
+                cameraEvents.Dispatch(e);
                 break;
             }
             case SDL_EVENT_MOUSE_BUTTON_UP:
             {
                 MouseButtonUpEvent e(event.button.button, event.button.x, event.button.y);
-                bus.Dispatch(e);
+                cameraEvents.Dispatch(e);
                 break;
             }
             default:
@@ -539,19 +660,24 @@ void Application::ProcessSDLEvents()
 
 void Application::RegisterListeners()
 {
-    bus.Subscribe(EventType::MouseButtonDown, [this](Event& event) { camera->OnEvent(event); });
-    bus.Subscribe(EventType::MouseButtonUp, [this](Event& event) { camera->OnEvent(event); });
-    bus.Subscribe(EventType::MouseMove, [this](Event& event) { camera->OnEvent(event); });
-    bus.Subscribe(EventType::MouseScroll, [this](Event& event) { camera->OnEvent(event); });
-    bus.Subscribe(EventType::KeyDown, [this](Event& event) { camera->OnEvent(event); });
-    bus.Subscribe(EventType::KeyUp, [this](Event& event) { camera->OnEvent(event); });
+    // Register camera events
+    cameraEvents.Subscribe(EventType::MouseButtonDown, [this](Event& event) { camera->OnEvent(event); });
+    cameraEvents.Subscribe(EventType::MouseButtonUp, [this](Event& event) { camera->OnEvent(event); });
+    cameraEvents.Subscribe(EventType::MouseMove, [this](Event& event) { camera->OnEvent(event); });
+    cameraEvents.Subscribe(EventType::MouseScroll, [this](Event& event) { camera->OnEvent(event); });
+    cameraEvents.Subscribe(EventType::KeyDown, [this](Event& event) { camera->OnEvent(event); });
+    cameraEvents.Subscribe(EventType::KeyUp, [this](Event& event) { camera->OnEvent(event); });
+
+    // Register app events
+    appEvents.Subscribe(EventType::KeyUp, [this](Event& event) { this->OnEvent(event); });
+    appEvents.Subscribe(EventType::KeyDown, [this](Event& event) { this->OnEvent(event); });
 }
 
 void Application::GenerateTerrain()
 {
     MapGenerator generator;
 
-    auto map = generator.GenerateNoiseMap(data.noiseScale, data.octaves, data.persistence, data.lacunarity, data.offset, data.seed);
+    auto map = generator.GenerateNoiseMap(noiseType, data.noiseScale, data.octaves, data.persistence, data.lacunarity, data.offset, data.seed);
 
     unsigned int size = map.size();
 
@@ -575,4 +701,85 @@ void Application::GenerateTerrain()
     {
         meshTexture->Create(size, size, pixels.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::Repeat, TextureFilter::Linear);
     }
+}
+
+void Application::Reset()
+{
+    displayType = DisplayType::HeightMap;
+    noiseType = NoiseType::Perlin;
+    data.seed = 0;
+    data.lacunarity = 2.0f;
+    data.noiseScale = 20.0f;
+    data.persistence = 0.5f;
+    data.octaves = 1;
+    data.offset = Vec2::Zero();
+    pixelate = false;
+    autoUpdateGenerator = false;
+
+    GenerateTerrain();
+}
+
+void Application::Open()
+{
+}
+
+void Application::Save()
+{
+}
+
+void Application::Export()
+{
+}
+
+void Application::OnMouseDown(MouseButtonDownEvent& event)
+{
+}
+
+void Application::OnMouseUp(MouseButtonUpEvent& event)
+{
+}
+
+void Application::OnMouseScroll(MouseScrollEvent& event)
+{
+}
+
+void Application::OnMouseMove(MouseMoveEvent& event)
+{
+}
+
+void Application::OnKeyDown(KeyDownEvent& event)
+{
+    switch (event.code)
+    {
+        case SDL_SCANCODE_N:
+            if (event.mod == SDL_KMOD_CTRL)
+            {
+                Reset();
+                event.handled = true;
+            }
+            break;
+        case SDL_SCANCODE_O:
+            if (event.mod == SDL_KMOD_CTRL)
+            {
+                Open();
+                event.handled = true;
+            }
+            break;
+        case SDL_SCANCODE_S:
+            if (event.mod == SDL_KMOD_CTRL)
+            {
+                Save();
+                event.handled = true;
+            }
+            break;
+        default:
+            break;
+    }
+
+    
+}
+
+void Application::OnKeyUp(KeyUpEvent& event)
+{
+
 }

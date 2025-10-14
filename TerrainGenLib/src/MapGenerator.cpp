@@ -8,7 +8,7 @@ MapGenerator::MapGenerator()
 	perlin = Perlin();
 }
 
-Float2D MapGenerator::GenerateNoiseMap(float scale, unsigned int octaves, float persistance, float lacunarity, const Math::Vec2& offset, unsigned int seed)
+Float2D MapGenerator::GenerateNoiseMap(NoiseType noiseType, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed)
 {
 	if (scale <= 0.0f)
 	{
@@ -17,6 +17,23 @@ Float2D MapGenerator::GenerateNoiseMap(float scale, unsigned int octaves, float 
 
 	Float2D map(256, std::vector<float>(256));
 
+	switch (noiseType)
+	{
+		case NoiseType::Perlin:
+			PerlinMap(map, scale, octaves, persistence, lacunarity, offset, seed);
+			break;
+		case NoiseType::Simplex:
+
+			break;
+		default:
+			break;
+	}
+	
+	return map;
+}
+
+void MapGenerator::PerlinMap(Float2D& map, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed)
+{
 	std::default_random_engine gen(seed);
 	std::uniform_real_distribution<float> dist(-100000.0, 100000.0);
 
@@ -51,7 +68,7 @@ Float2D MapGenerator::GenerateNoiseMap(float scale, unsigned int octaves, float 
 				float value = perlin.Noise(sampleX, sampleY) * 2 - 1;
 				noiseHeight += value * amplitude;
 
-				amplitude *= persistance;
+				amplitude *= persistence;
 				frequency *= lacunarity;
 			}
 
@@ -74,6 +91,4 @@ Float2D MapGenerator::GenerateNoiseMap(float scale, unsigned int octaves, float 
 			map[y][x] = Math::InverseLerp(minNoiseHeight, maxNoiseHeight, map[y][x]);
 		}
 	}
-
-	return map;
 }

@@ -5,6 +5,9 @@
 #include "OpenGL/Camera.h"
 #include "OpenGL/Shader.h"
 
+#include <MapGenerator.h>
+
+#include <filesystem>
 #include <random>
 
 class Framebuffer;
@@ -30,14 +33,30 @@ public:
 
 	void Render();
 
+	void OnEvent(Event& event);
+
 private:
 	void ProcessSDLEvents();
 	void RegisterListeners();
 	
 	void GenerateTerrain();
 
+	void Reset();
+	void Open();
+	void Save();
+	void Export();
+
+	void OnMouseDown(MouseButtonDownEvent& event);
+	void OnMouseUp(MouseButtonUpEvent& event);
+	void OnMouseScroll(MouseScrollEvent& event);
+	void OnMouseMove(MouseMoveEvent& event);
+	void OnKeyDown(KeyDownEvent& event);
+	void OnKeyUp(KeyUpEvent& event);
+
 private:
-	EventBus bus;
+	EventBus cameraEvents;
+	EventBus appEvents;
+	std::filesystem::path rootDir;
 	GeneratorData data;
 	GeneratorData dataLastFrame;
 	SDL_Window* window;
@@ -48,6 +67,8 @@ private:
 	SDL_GLContext context;
 	unsigned int fps = 0;
 	Shader shader;
+	DisplayType displayType = DisplayType::HeightMap;
+	NoiseType noiseType = NoiseType::Perlin;
 	bool running = false;
 	bool showDemoWindow = false;
 	bool autoUpdateGenerator = false;
