@@ -1,40 +1,46 @@
 #pragma once
 
-class Texture;
 
-struct FBSpec
+namespace OpenGL
 {
-	unsigned int width = 0;
-	unsigned int height = 0;
+	class Texture;
 
-	FBSpec() = default;
-	FBSpec(unsigned int width, unsigned int height)
-		: width(width), height(height) { }
-};
+	struct FBSpec
+	{
+		unsigned int width = 0;
+		unsigned int height = 0;
 
-class Framebuffer
-{
-public:
-	Framebuffer(unsigned int width, unsigned int height);
-	~Framebuffer();
+		FBSpec() = default;
+		FBSpec(unsigned int width, unsigned int height)
+			: width(width), height(height)
+		{
+		}
+	};
 
-	void Resize(unsigned int width, unsigned int height);
+	class Framebuffer
+	{
+	public:
+		Framebuffer(unsigned int width, unsigned int height);
+		~Framebuffer();
 
-	void Bind() const;
-	void Unbind() const;
+		void Resize(unsigned int width, unsigned int height);
 
-	Texture* GetColourTexture() const { return colourTexture; }
-	Texture* GetDepthTexture() const { return depthTexture; }
-	unsigned int GetID() const { return framebufferID; }
-	unsigned int GetColourID() const { return framebufferID; }
-	unsigned int GetDepthID() const { return framebufferID; }
+		void Bind() const;
+		void Unbind() const;
 
-	FBSpec GetSpec() const { return spec; }
+		Texture* GetColourTexture() const { return colourTexture; }
+		Texture* GetDepthTexture() const { return depthTexture; }
+		unsigned int GetID() const { return framebufferID; }
+		unsigned int GetColourID() const { return framebufferID; }
+		unsigned int GetDepthID() const { return framebufferID; }
 
-private:
-	FBSpec spec;
-	unsigned int framebufferID = 0;
-	unsigned int renderbufferID = 0;
-	Texture* colourTexture = nullptr;
-	Texture* depthTexture = nullptr;
-};
+		FBSpec GetSpec() const { return spec; }
+
+	private:
+		FBSpec spec;
+		unsigned int framebufferID = 0;
+		unsigned int renderbufferID = 0;
+		Texture* colourTexture = nullptr;
+		Texture* depthTexture = nullptr;
+	};
+}

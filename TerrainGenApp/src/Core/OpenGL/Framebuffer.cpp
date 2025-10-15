@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+using namespace OpenGL;
+
 Framebuffer::Framebuffer(unsigned int width, unsigned int height)
 {
 	spec.width = width;

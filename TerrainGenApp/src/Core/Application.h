@@ -5,21 +5,26 @@
 #include "OpenGL/Camera.h"
 #include "OpenGL/Shader.h"
 
-#include <terraingen/MapGenerator.h>
+#include <terraingen/TerrainGenerator.h>
 #include <terraingen/types/TerrainType.h>
 
 #include <filesystem>
 #include <random>
 #include <vector>
 
-class Framebuffer;
-class Mesh;
-class Texture;
+namespace OpenGL
+{
+	class Framebuffer;
+	class Material;
+	class Mesh;
+	class Texture;
+}
 
 struct SDL_Window;
 struct SDL_GLContextState;
 
 typedef SDL_GLContextState* SDL_GLContext;
+
 
 class Application
 {
@@ -58,20 +63,22 @@ private:
 private:
 	EventBus cameraEvents;
 	EventBus appEvents;
-	std::vector<TerrainType> terrainTypes;
+	std::vector<TerrainType> regions;
 	std::filesystem::path rootDir;
 	GeneratorData data;
 	GeneratorData dataLastFrame;
 	SDL_Window* window;
-	Camera* camera;
-	Mesh* mesh;
-	Texture* heightMap;
-	Texture* colourMap;
-	Framebuffer* framebuffer;
+	OpenGL::Camera* camera;
+	OpenGL::Material* mat;
+	OpenGL::Mesh* mesh;
+	OpenGL::Texture* heightMap;
+	OpenGL::Texture* colourMap;
+	OpenGL::Framebuffer* framebuffer;
 	SDL_GLContext context;
 	unsigned int fps = 0;
-	Shader shader;
-	DisplayType displayType = DisplayType::HeightMap;
+	OpenGL::Shader shader;
+	DisplayType displayType = DisplayType::Quad;
+	DisplayTextureType textureDisplayType = DisplayTextureType::HeightMap;
 	NoiseType noiseType = NoiseType::Perlin;
 	bool running = false;
 	bool showDemoWindow = false;

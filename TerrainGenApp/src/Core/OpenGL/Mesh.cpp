@@ -3,6 +3,8 @@
 
 #include <glad/glad.h>
 
+using namespace OpenGL;
+
 Mesh::Mesh(Material* material, MeshShape shape)
 	: material(material)
 {

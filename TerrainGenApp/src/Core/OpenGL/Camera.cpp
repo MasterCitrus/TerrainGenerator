@@ -3,6 +3,8 @@
 #include <glm/vec3.hpp>
 #include <glm/ext.hpp>
 
+using namespace OpenGL;
+
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
 	: fov(fov), aspectRatio(aspectRatio), nearClip(nearClip), farClip(farClip), projection(glm::perspective(glm::radians(fov), aspectRatio, nearClip, farClip))
 {
@@ -163,12 +165,15 @@ void Camera::OnMouseDown(MouseButtonDownEvent& event)
 	{
 		case 1: // Left Button
 			leftMouse = true;
+			event.handled = true;
 			break;
 		case 2: // Middle Button
 			middleMouse = true;
+			event.handled = true;
 			break;
 		case 3: // Right Button
 			rightMouse = true;
+			event.handled = true;
 			break;
 			// 4 Side button
 			// 5 Side button
@@ -185,20 +190,21 @@ void Camera::OnMouseUp(MouseButtonUpEvent& event)
 	{
 		case 1: // Left Button
 			leftMouse = false;
+			event.handled = true;
 			break;
 		case 2: // Middle Button
 			middleMouse = false;
+			event.handled = true;
 			break;
 		case 3: // Right Button
 			rightMouse = false;
+			event.handled = true;
 			break;
 			// 4 Side button
 			// 5 Side button
 		default:
 			break;
 	}
-
-	event.handled = true;
 }
 
 void Camera::OnMouseScroll(MouseScrollEvent& event)
@@ -218,19 +224,22 @@ void Camera::OnMouseMove(MouseMoveEvent& event)
 	if (middleMouse)
 	{
 		Pan(mouseDelta);
+		event.handled = true;
 	}
 	else if (rightMouse && leftMouse)
 	{
 		Zoom(mouseDelta.y);
+		event.handled = true;
 	}
 	else if (rightMouse)
 	{
 		Rotate(mouseDelta);
+		event.handled = true;
 	}
 
 	UpdateView();
 
-	event.handled = true;
+	
 }
 
 void Camera::OnKeyDown(KeyDownEvent& event)
@@ -239,6 +248,7 @@ void Camera::OnKeyDown(KeyDownEvent& event)
 	{
 		case SDL_SCANCODE_F:
 			SetFocus(glm::vec3(0.0f, 0.0f, 0.0f));
+			event.handled = true;
 			break;
 		case SDL_SCANCODE_1:
 
@@ -246,8 +256,6 @@ void Camera::OnKeyDown(KeyDownEvent& event)
 		default:
 			break;
 	}
-
-	event.handled = true;
 }
 
 void Camera::OnKeyUp(KeyUpEvent& event)

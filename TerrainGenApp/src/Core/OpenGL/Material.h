@@ -1,19 +1,23 @@
 #pragma once
 
-class Shader;
-class Texture;
 
-class Material
+namespace OpenGL
 {
-public:
-	Material(Shader* shader);
+	class Shader;
+	class Texture;
 
-	Texture* GetTexture() const { return texture; }
-	void SetTexture(Texture* texture);
+	class Material
+	{
+	public:
+		Material(Shader* shader);
 
-	void Apply();
+		Texture* GetTexture() const { return texture; }
+		void SetTexture(Texture* texture);
 
-private:
-	Shader* shader = nullptr;
-	Texture* texture = nullptr;
-};
+		void Apply();
+
+	private:
+		Shader* shader = nullptr;
+		Texture* texture = nullptr;
+	};
+}

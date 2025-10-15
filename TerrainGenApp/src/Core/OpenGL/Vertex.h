@@ -3,9 +3,12 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-struct Vertex
+namespace OpenGL
 {
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec2 uv;
-};
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec2 uv;
+	};
+}

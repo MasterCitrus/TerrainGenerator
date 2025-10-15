@@ -1,11 +1,9 @@
 #pragma once
 
-#include "Vertex.h";
-
-#include <vector>
+#include "Defines.h";
 
 struct MeshData
 {
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
+	VertexData vertices;
+	IndexData indices;
 };

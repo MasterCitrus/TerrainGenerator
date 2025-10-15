@@ -2,6 +2,8 @@
 #include "Shader.h"
 #include "Texture.h"
 
+using namespace OpenGL;
+
 Material::Material(Shader* shader)
 	: shader(shader)
 {

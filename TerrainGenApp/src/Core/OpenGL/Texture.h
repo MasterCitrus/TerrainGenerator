@@ -35,30 +35,33 @@ enum class TextureFilter : uint8_t
 	LinearMipmapLinear,
 };
 
-class Texture
+namespace OpenGL
 {
-public:
-	Texture() = default;
-	Texture(unsigned int width, unsigned int height, unsigned char* data = nullptr, TextureType type = TextureType::Colour,
-		TextureFormat format = TextureFormat::RGBA, TextureWrapping wrap = TextureWrapping::Repeat, TextureFilter filter = TextureFilter::Linear);
-	Texture(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter);
-	~Texture();
+	class Texture
+	{
+	public:
+		Texture() = default;
+		Texture(unsigned int width, unsigned int height, unsigned char* data = nullptr, TextureType type = TextureType::Colour,
+				TextureFormat format = TextureFormat::RGBA, TextureWrapping wrap = TextureWrapping::Repeat, TextureFilter filter = TextureFilter::Linear);
+		Texture(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter);
+		~Texture();
 
-	bool Create(unsigned int width, unsigned int height, unsigned char* data, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter);
-	bool Load(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter);
+		bool Create(unsigned int width, unsigned int height, unsigned char* data, TextureType type, TextureFormat format, TextureWrapping wrap, TextureFilter filter);
+		bool Load(const std::string& path, TextureType type, TextureWrapping wrap, TextureFilter filter);
 
-	void Bind(int slot = 0) const;
-	void Unbind() const;
+		void Bind(int slot = 0) const;
+		void Unbind() const;
 
-	unsigned int GetID() const { return textureID; }
-	unsigned int GetWidth() const { return width; }
-	unsigned int GetHeight() const { return height; }
+		unsigned int GetID() const { return textureID; }
+		unsigned int GetWidth() const { return width; }
+		unsigned int GetHeight() const { return height; }
 
-	operator unsigned int() const { return textureID; }
+		operator unsigned int() const { return textureID; }
 
-private:
-	unsigned int textureID = 0;
-	unsigned int width;
-	unsigned int height;
-	TextureType type;
-};
+	private:
+		unsigned int textureID = 0;
+		unsigned int width;
+		unsigned int height;
+		TextureType type;
+	};
+}

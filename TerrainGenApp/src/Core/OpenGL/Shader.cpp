@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-using namespace Math;
+using namespace OpenGL;
 
 bool Shader::Load(const std::string& vertPath, const std::string& fragPath)
 {

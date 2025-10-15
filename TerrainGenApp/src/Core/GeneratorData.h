@@ -5,13 +5,18 @@
 
 enum class DisplayType : uint8_t
 {
-	HeightMap = 0,
-	ColourMap,
+	Quad = 0,
 	Mesh,
 };
 
-extern const char* displayTypeNames[3];
+enum class DisplayTextureType : uint8_t
+{
+	HeightMap = 0,
+	ColourMap,
+};
 
+extern const char* displayTypeNames[2];
+extern const char* displayTextureTypeNames[2];
 extern const char* noiseTypeNames[2];
 
 struct GeneratorData
@@ -22,6 +27,7 @@ struct GeneratorData
 	float noiseScale = 20.0f;
 	unsigned int octaves = 1;
 	Math::Vec2 offset = { 0.0f, 0.0f };
+	float heightMultiplier = 1.0f;
 
 	bool operator==(const GeneratorData& other)
 	{

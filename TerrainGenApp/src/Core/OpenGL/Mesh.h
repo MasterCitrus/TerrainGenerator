@@ -4,7 +4,6 @@
 
 #include <vector>
 
-class Material;
 
 enum class MeshShape : uint8_t
 {
@@ -14,28 +13,33 @@ enum class MeshShape : uint8_t
 	IcoSphere
 };
 
-class Mesh
+namespace OpenGL
 {
-public:
-	Mesh() = default;
-	Mesh(Material* material, MeshShape shape = MeshShape::Cube);
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int> indices, Material* material);
-	~Mesh();
+	class Material;
+	
+	class Mesh
+	{
+	public:
+		Mesh() = default;
+		Mesh(Material* material, MeshShape shape = MeshShape::Cube);
+		Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int> indices, Material* material);
+		~Mesh();
 
-	Material* GetMaterial() { return material; }
-	void SetMaterial(Material* material) { this->material = material; }
+		Material* GetMaterial() { return material; }
+		void SetMaterial(Material* material) { this->material = material; }
 
-	void Draw();
+		void Draw();
 
-private:
-	void MakeQuad();
-	void MakeCube();
-	void MakeUVSphere();
-	void MakeIcoSphere();
+	private:
+		void MakeQuad();
+		void MakeCube();
+		void MakeUVSphere();
+		void MakeIcoSphere();
 
-private:
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	Material* material = nullptr;
-	unsigned int VAO, VBO, IBO;
-};
+	private:
+		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indices;
+		Material* material = nullptr;
+		unsigned int VAO, VBO, IBO;
+	};
+}

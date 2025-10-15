@@ -1,32 +1,22 @@
 #pragma once
 
 #include "noise/Perlin.h"
-#include "types/math/Vec2.h"
+#include "types/Defines.h"
+#include "types/GenData.h"
 #include "types/MapData.h"
-#include "types/TerrainType.h"
-
-#include <vector>
-
-enum class NoiseType : uint8_t
-{
-	Perlin = 0,
-	Simplex,
-};
-
-typedef std::vector<std::vector<float>> Float2D;
 
 class MapGenerator
 {
 public:
 	MapGenerator();
 
-	MapData GenerateMap(NoiseType noiseType, const std::vector<TerrainType>& regions, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed = std::default_random_engine::default_seed);
+	MapData GenerateMap(GenData* data, const RegionData& regions, unsigned int size);
 
 private:
-	Float2D GenerateNoiseMap(NoiseType noiseType, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed);
-	std::vector<Vec3> GenerateColourMap(const Float2D& map, const std::vector<TerrainType>& regions);
+	HeightData GenerateNoiseMap(GenData* data, unsigned int size);
+	ColourData GenerateColourMap(const HeightData& map, const RegionData& regions);
 
-	void PerlinMap(Float2D& map, float scale, unsigned int octaves, float persistence, float lacunarity, const Math::Vec2& offset, unsigned int seed);
+	HeightData PerlinMap(PerlinGenData data, unsigned int size);
 
 private:
 	Perlin perlin;
