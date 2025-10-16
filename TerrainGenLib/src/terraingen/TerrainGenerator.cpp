@@ -1,6 +1,6 @@
 #include "terraingen/TerrainGenerator.h"
 
-void TerrainGenerator::GenerateTerrain(GenData* data, const RegionData& regions, float heightMultiplier, unsigned int size)
+void TerrainGenerator::GenerateTerrain(GenData* data, const RegionData& regions, const Curve& heightCurve, float heightMultiplier, unsigned int size)
 {
 	if (size == 0)
 	{
@@ -19,7 +19,7 @@ void TerrainGenerator::GenerateTerrain(GenData* data, const RegionData& regions,
 
 	MeshData meshData;
 
-	meshData = meshGen.GenerateMesh(mapData.heightMap, heightMultiplier);
+	meshData = meshGen.GenerateMesh(mapData.heightMap, heightMultiplier, heightCurve);
 
 	this->data.colourTexture = colourData;
 	this->data.heightTexture = heightData;

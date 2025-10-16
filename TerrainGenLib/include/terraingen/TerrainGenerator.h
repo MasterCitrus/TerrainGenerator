@@ -10,7 +10,7 @@ class TerrainGenerator
 public:
 	TerrainGenerator() = default;
 
-	void GenerateTerrain(GenData* data, const RegionData& regions, float heightMultiplier = 1.0f, unsigned int size = 256);
+	void GenerateTerrain(GenData* data, const RegionData& regions, const Curve& heightCurve, float heightMultiplier = 1.0f, unsigned int size = 256);
 
 	TerrainData GetData() const { return data; }
 

@@ -318,6 +318,7 @@ void Application::Update(float delta)
                     const bool isSelected = (displayType == static_cast<DisplayType>(i));
                     if (ImGui::Selectable(displayTypeNames[i], isSelected))
                     {
+                        previousDisplayType = displayType;
                         displayType = static_cast<DisplayType>(i);
                     }
 
@@ -524,6 +525,17 @@ void Application::Update(float delta)
 
         // Regions /////////////////////////////////
         ImGui::SeparatorText("Regions");
+        ///////////////////////////////////////
+        ////// Height Curve ///////////////////
+        ///////////////////////////////////////
+        if (curveEditor.Draw("Height Curve", data.heightCurve))
+        {
+            if(autoUpdateGenerator)
+            {
+                GenerateTerrain();
+            }
+        }
+
         ImGui::Text("Number of Regions: %i", regions.size());
         for (int i = 0; i < regions.size(); i++)
         {
@@ -538,44 +550,62 @@ void Application::Update(float delta)
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Name");
                     ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-1);
                     ImGui::InputText(("##regionname" + std::to_string(i)).c_str(), &regions[i].name, 0, InputTextResizeCallback);
 
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Colour");
                     ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-1);
                     if (ImGui::ColorEdit3(("##regioncolour" + std::to_string(i)).c_str(), &regions[i].colour[0]))
                     {
-                        GenerateTerrain();
+                        if(autoUpdateGenerator)
+                        {
+                            GenerateTerrain();
+                        }
                     }
 
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Height");
                     ImGui::TableSetColumnIndex(1);
-                    if (ImGui::InputFloat(("##regionheight" + std::to_string(i)).c_str(), &regions[i].height))
+                    ImGui::SetNextItemWidth(-1);
+                    if (ImGui::DragFloat(("##regionheight" + std::to_string(i)).c_str(), &regions[i].height, 0.01f, 0.0f, 1.0f, "%.2f"))
                     {
-                        GenerateTerrain();
+                        if(autoUpdateGenerator)
+                        {
+                            GenerateTerrain();
+                        }
                     }
 
                     ImGui::EndTable();
                 }
             }
         }
-        if (ImGui::Button("Add Region"))
+
+        ImVec2 buttonSize = ImGui::CalcTextSize("Default Regions");
+        buttonSize.x += ImGui::GetStyle().FramePadding.x * 2.0f;
+
+        if (ImGui::Button("Add Region", ImVec2(buttonSize.x, 0)))
         {
             TerrainType type("Temp", Vec3(0.0f, 0.0f, 0.0f), 0.0f);
             regions.push_back(type);
+            std::sort(regions.begin(), regions.end());
         }
         ImGui::SameLine();
-        if (ImGui::Button("Clear Regions"))
+        if (ImGui::Button("Clear Regions", ImVec2(buttonSize.x, 0)))
         {
             regions.clear();
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Default Regions"))
+        if (ImGui::Button("Default Regions", ImVec2(buttonSize.x, 0)))
         {
             regions = defaultRegions;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Sort Regions", ImVec2(buttonSize.x, 0)))
+        {
+            std::sort(regions.begin(), regions.end());
         }
         ImGui::Separator();
 
@@ -624,14 +654,10 @@ void Application::Update(float delta)
         }
     }
 
-    switch (displayType)
+    if (displayType != previousDisplayType)
     {
-        case DisplayType::Quad:
-        case DisplayType::Mesh:
-            GenerateTerrain();
-            break;
-        default:
-            break;
+        previousDisplayType = displayType;
+        GenerateTerrain();
     }
 
     switch (textureDisplayType)
@@ -779,7 +805,7 @@ void Application::GenerateTerrain()
         case NoiseType::Perlin:
         {
             PerlinGenData perlin(NoiseType::Perlin, data.noiseScale, data.octaves, data.persistence, data.lacunarity, data.offset, data.seed);
-            generator.GenerateTerrain(&perlin, regions, data.heightMultiplier);
+            generator.GenerateTerrain(&perlin, regions, data.heightCurve, data.heightMultiplier);
             break;
         }
         case NoiseType::Simplex:
@@ -804,24 +830,15 @@ void Application::GenerateTerrain()
 
     if(mesh) delete mesh;
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-
-
     switch (displayType)
     {
         case DisplayType::Quad:
             mesh = new OpenGL::Mesh(mat, MeshShape::Quad);
-            model = glm::scale(model, glm::vec3(5.0f));
             break;
         case DisplayType::Mesh:
             mesh = new OpenGL::Mesh(vertices, terrain.meshData.indices, mat);
-            model = glm::scale(model, glm::vec3(0.5f));
             break;
     }
-
-    shader.Bind();
-    shader.SetMat("model", model);
 
     if (pixelate)
     {

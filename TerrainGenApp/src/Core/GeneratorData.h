@@ -1,6 +1,7 @@
 #pragma once
 
 #include "terraingen/types/math/Vec2.h"
+#include <terraingen/types/math/Curve.h>
 #include <cstdint>
 
 enum class DisplayType : uint8_t
@@ -28,6 +29,7 @@ struct GeneratorData
 	unsigned int octaves = 1;
 	Math::Vec2 offset = { 0.0f, 0.0f };
 	float heightMultiplier = 1.0f;
+	Curve heightCurve;
 
 	bool operator==(const GeneratorData& other)
 	{
@@ -36,7 +38,8 @@ struct GeneratorData
 			&& this->persistence == other.persistence
 			&& this->noiseScale == other.noiseScale
 			&& this->octaves == other.octaves
-			&& this->offset == other.offset;
+			&& this->offset == other.offset
+			&& this->heightMultiplier == other.heightMultiplier;
 	}
 	bool operator!=(const GeneratorData& other)
 	{

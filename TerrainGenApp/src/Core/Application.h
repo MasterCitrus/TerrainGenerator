@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ImGui/CurveEditor.h"
+
 #include "Events/EventBus.h"
 #include "GeneratorData.h"
 #include "OpenGL/Camera.h"
@@ -61,6 +63,7 @@ private:
 	void OnKeyUp(KeyUpEvent& event);
 
 private:
+	CurveEditor curveEditor;
 	EventBus cameraEvents;
 	EventBus appEvents;
 	std::vector<TerrainType> regions;
@@ -78,6 +81,7 @@ private:
 	unsigned int fps = 0;
 	OpenGL::Shader shader;
 	DisplayType displayType = DisplayType::Quad;
+	DisplayType previousDisplayType = displayType;
 	DisplayTextureType textureDisplayType = DisplayTextureType::HeightMap;
 	NoiseType noiseType = NoiseType::Perlin;
 	bool running = false;
@@ -86,4 +90,7 @@ private:
 	bool viewportHovered = false;
 	bool viewportFocused = false;
 	bool pixelate = false;
+	bool regionsPendingSort = false;
+	bool regionsSorted = true;
+	bool waitToSort = false;
 };

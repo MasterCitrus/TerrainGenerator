@@ -1,7 +1,7 @@
 #include "terraingen/MeshGenerator.h"
 #include "terraingen/types/math/Vec2.h"
 
-MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultiplier)
+MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultiplier, const Curve& heightCurve)
 {
 	MeshData meshData;
 
@@ -19,7 +19,8 @@ MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultipl
 	{
 		for (int x = 0; x < size; x++)
 		{
-			vertices[vertexIndex].pos = Vec3(topLeftX + x, data[y][x] * heightMultiplier, topLeftZ - y);
+			vertices[vertexIndex].pos = Vec3(topLeftX + x, heightCurve.Evaluate(data[y][x]) * heightMultiplier, topLeftZ - y);
+			//vertices[vertexIndex].pos = ComputeNormal(x, y, size, data);
 			vertices[vertexIndex].uv = Vec2(x / (float)(size - 1), y / (float)(size - 1));
 
 			if (x < size - 1 && y < size - 1)
@@ -49,4 +50,31 @@ MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultipl
 	meshData.indices = indices;
 
 	return meshData;
+}
+
+Math::Vec3 MeshGenerator::ComputeNormal(int x, int y, int size, const HeightData& data)
+{
+	float hL = Sample(x, y, size, data);
+	float hR = Sample(x, y, size, data);
+	float hD = Sample(x, y, size, data);
+	float hU = Sample(x, y, size, data);
+
+	Math::Vec3 normal;
+	normal.x = hL - hR;
+	normal.y = 2.0f;
+	normal.z = hD - hU;
+
+	normal.Normalise();
+
+	return normal;
+}
+
+float MeshGenerator::Sample(int x, int y, int size, const HeightData& data) const
+{
+	if (x < 0) x = 0;
+	else if (x >= size) x = size - 1;
+	if (y < 0) y = 0;
+	else if (y >= size) x = size - 1;
+
+	return data[y][x];
 }
