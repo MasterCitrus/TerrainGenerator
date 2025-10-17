@@ -1,11 +1,11 @@
 #pragma once
 
 #include "ImGui/CurveEditor.h"
-
 #include "Events/EventBus.h"
 #include "GeneratorData.h"
 #include "OpenGL/Camera.h"
 #include "OpenGL/Shader.h"
+#include "Serializer.h"
 
 #include <terraingen/TerrainGenerator.h>
 #include <terraingen/TerrainExporter.h>
@@ -48,6 +48,8 @@ public:
 	static Application* Get() { return app; }
 
 	void ExportFile(void* data);
+	void SaveFile(void* data) const;
+	void LoadFile(void* data);
 
 private:
 	void ProcessSDLEvents();
@@ -107,4 +109,6 @@ private:
 	bool showExtraTextures = false;
 };
 
+static void ExportModelCallback(void* userdata, const char* const* filelist, int filter_index);
+static void SaveFileCallback(void* userdata, const char* const* filelist, int filter_index);
 static void SDLCALL OpenFileCallback(void* userdata, const char* const* filelist, int filter_index);

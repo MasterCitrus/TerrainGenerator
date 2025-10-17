@@ -925,10 +925,46 @@ void Application::Reset()
 
 void Application::Open()
 {
+    SDL_DialogFileFilter filters[1] = {
+        { "Terrain Project", "tgen" }
+    };
+
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_FILTERS_POINTER, &filters);
+    SDL_SetNumberProperty(props, SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, 1);
+    SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_WINDOW_POINTER, window);
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_LOCATION_STRING, (rootDir.string() + '\\').c_str());
+    SDL_SetBooleanProperty(props, SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, false);
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING, "Open Terrain Project");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_ACCEPT_STRING, "Open");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_CANCEL_STRING, "Cancel");
+
+    void* data = 0;
+
+    SDL_ShowFileDialogWithProperties(SDL_FILEDIALOG_OPENFILE, OpenFileCallback, data, props);
 }
 
 void Application::Save()
 {
+    SDL_DialogFileFilter filters[1] = {
+        { "Terrain Project", "tgen" }
+    };
+
+    std::string defaultName = "Terrain.tgen";
+
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_FILTERS_POINTER, &filters);
+    SDL_SetNumberProperty(props, SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, 1);
+    SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_WINDOW_POINTER, window);
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_LOCATION_STRING, (rootDir.string() + "\\" + defaultName).c_str());
+    SDL_SetBooleanProperty(props, SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, false);
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING, "Save Terrain Project");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_ACCEPT_STRING, "Save");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_CANCEL_STRING, "Cancel");
+
+    void* data = 0;
+
+    SDL_ShowFileDialogWithProperties(SDL_FILEDIALOG_SAVEFILE, SaveFileCallback, data, props);
 }
 
 void Application::Export(FileType type)
@@ -961,16 +997,16 @@ void Application::Export(FileType type)
     SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_WINDOW_POINTER, window);
     SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_LOCATION_STRING, (rootDir.string() + "\\" + defaultName).c_str());
     SDL_SetBooleanProperty(props, SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, false);
-    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING, "Save Terrain");
-    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_ACCEPT_STRING, "Save");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING, "Export Terrain");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_ACCEPT_STRING, "Export");
     SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_CANCEL_STRING, "Cancel");
 
     void* data = 0;
 
-    SDL_ShowFileDialogWithProperties(SDL_FILEDIALOG_SAVEFILE, OpenFileCallback, data, props);
+    SDL_ShowFileDialogWithProperties(SDL_FILEDIALOG_SAVEFILE, ExportModelCallback, data, props);
 }
 
-void OpenFileCallback(void* userdata, const char* const* filelist, int filter_index)
+void ExportModelCallback(void* userdata, const char* const* filelist, int filter_index)
 {
     if (!filelist) return;
     else if (filelist[0] == nullptr) return;
@@ -980,6 +1016,31 @@ void OpenFileCallback(void* userdata, const char* const* filelist, int filter_in
         std::cout << file << '\n';
 
         Application::Get()->ExportFile((void*)file);
+    }
+}
+
+void SaveFileCallback(void* userdata, const char* const* filelist, int filter_index)
+{
+    if (!filelist) return;
+    else if (filelist[0] == nullptr) return;
+    else
+    {
+        const char* file = *filelist;
+        std::cout << file << '\n';
+
+        Application::Get()->SaveFile((void*)file);
+    }
+}
+
+void SDLCALL OpenFileCallback(void* userdata, const char* const* filelist, int filter_index)
+{
+    if (!filelist) return;
+    else if (filelist[0] == nullptr) return;
+    else
+    {
+        const char* file = *filelist;
+
+        Application::Get()->LoadFile((void*)file);
     }
 }
 
@@ -1045,4 +1106,46 @@ void Application::ExportFile(void* data)
     auto terrainData = generator.GetData();
 
     exporter.Export(savePath, terrainData, currentType);
+}
+
+void Application::SaveFile(void* data) const
+{
+    std::string path = (const char*)data;
+
+    std::filesystem::path savePath(path);
+
+    SaveData saveData;
+    saveData.regions = regions;
+    saveData.heightCurve = this->data.heightCurve;
+    saveData.heightMultiplier = this->data.heightMultiplier;
+    saveData.lacunarity = this->data.lacunarity;
+    saveData.noiseScale = this->data.noiseScale;
+    saveData.octaves = this->data.octaves;
+    saveData.persistence = this->data.persistence;
+    saveData.offset = this->data.offset;
+    saveData.seed = this->data.seed;
+
+    Serializer::Serialize(saveData, savePath);
+}
+
+void Application::LoadFile(void* data)
+{
+
+    std::string path = (const char*)data;
+
+    std::filesystem::path loadPath(path);
+
+    auto loadData = Serializer::Deserialize(loadPath);
+
+    regions = loadData.regions;
+    this->data.heightCurve = loadData.heightCurve;
+    this->data.heightMultiplier = loadData.heightMultiplier;
+    this->data.lacunarity = loadData.lacunarity;
+    this->data.noiseScale = loadData.noiseScale;
+    this->data.octaves = loadData.octaves;
+    this->data.persistence = loadData.persistence;
+    this->data.offset = loadData.offset;
+    this->data.seed = loadData.seed;
+
+    GenerateTerrain();
 }
