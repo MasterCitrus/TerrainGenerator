@@ -445,6 +445,7 @@ bool CurveEditor::HandleInput(Curve& curve, const ImVec2& canvasPos, const ImVec
                 {
                     key.time = std::clamp(key.time + timeDelta, minTime, maxTime);
                     key.value = std::clamp(key.value + valueDelta, minValue, maxValue);
+                    changed = true;
                 }
             }
         }

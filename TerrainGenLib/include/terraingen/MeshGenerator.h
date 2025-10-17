@@ -11,6 +11,5 @@ public:
 	MeshData GenerateMesh(const HeightData& data, float heightMultiplier, const Curve& heightCurve);
 
 private:
-	Math::Vec3 ComputeNormal(int x, int y, int size, const HeightData& data);
-	float Sample(int x, int y, int size, const HeightData& data) const;
+	void ComputeNormal(VertexData& vertices, const IndexData indices, int size);
 };

@@ -18,7 +18,10 @@
 
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <numbers>
+
+Application* Application::app = nullptr;
 
 static int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
 {
@@ -30,15 +33,19 @@ static int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
 }
 
 const std::vector<TerrainType> defaultRegions = {
-    {"Water", Vec3(0.0f, 0.0f, 1.0f), 0.2f},
-    {"Sand", Vec3(0.98f, 0.86f, 0.52f), 0.4f},
-    {"Land", Vec3(0.0f, 0.42f, 0.0f), 0.6f},
-    {"Mountain", Vec3(0.15f, 0.15f, 0.15f), 0.8f},
+    {"Water - Deep", Vec3(0.0f, 0.0f, 1.0f), 0.0f},
+    {"Water", Vec3(0.0f, 0.6f, 1.0f), 0.27f},
+    {"Sand", Vec3(0.98f, 0.86f, 0.52f), 0.38f},
+    {"Land", Vec3(0.0f, 0.8f, 0.0f), 0.46f},
+    {"Land 2", Vec3(0.0f, 0.6f, 0.0f), 0.6f},
+    {"Mountain", Vec3(0.25f, 0.25f, 0.25f), 0.8f},
     {"Snow", Vec3(1.0f, 1.0f, 1.0f), 1.0f},
 };
 
 bool Application::Initialise()
 {
+    app = this;
+
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
         return false;
@@ -95,6 +102,8 @@ bool Application::Initialise()
     camera = new OpenGL::Camera(45.0f, 1.778f, 0.1f, 10000.f);
 
     heightMap = new OpenGL::Texture;
+    noiseMap = new OpenGL::Texture;
+    falloffMap = new OpenGL::Texture;
     colourMap = new OpenGL::Texture;
 
     if (!shader.Load(rootDir.string() + "\\shaders\\mesh.vert", rootDir.string() + "\\shaders\\mesh.frag"))
@@ -111,6 +120,8 @@ void Application::Deinitialise()
 {
     delete camera;
     delete framebuffer;
+    delete falloffMap;
+    delete noiseMap;
     delete heightMap;
     delete colourMap;
     delete mat;
@@ -206,32 +217,6 @@ void Application::Update(float delta)
         ImGui::DockBuilderFinish(dockspaceID);
     }
 
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    framebuffer->Bind();
-
-    glEnable(GL_DEPTH_TEST);
-
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    shader.Bind();
-
-    shader.SetVec("viewPos", camera->GetPosition());
-    shader.SetMat("projection", camera->GetProjectionMatrix());
-    shader.SetMat("view", camera->GetViewMatrix());
-
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(5.0f));
-
-    shader.SetMat("model", model);
-
-    mesh->Draw();
-
-    framebuffer->Unbind();
-
     if(showDemoWindow)
     {
         ImGui::ShowDemoWindow();
@@ -255,7 +240,14 @@ void Application::Update(float delta)
             }
             if (ImGui::BeginMenu("Export Terrain"))
             {
-
+                if (ImGui::MenuItem("FBX"))
+                {
+                    Export(FileType::FBX);
+                }
+                if (ImGui::MenuItem("OBJ"))
+                {
+                    Export(FileType::OBJ);
+                }
                 ImGui::EndMenu();
             }
 
@@ -271,27 +263,7 @@ void Application::Update(float delta)
         ImGui::EndMainMenuBar();
     }
 
-    // Viewport Start    
-
-    ImGui::Begin("Viewport");
-    ImVec2 viewport = ImGui::GetContentRegionAvail();
-    viewportHovered = ImGui::IsWindowHovered();
-    viewportFocused = ImGui::IsWindowFocused();
-
-    if (OpenGL::FBSpec spec = framebuffer->GetSpec(); viewport.x > 0.0f && viewport.y > 0.0f && ((float)spec.width != viewport.x || (float)spec.height != viewport.y))
-    {
-        framebuffer->Resize((unsigned int)viewport.x, (unsigned int)viewport.y);
-        camera->SetViewportSize(viewport.x, viewport.y);
-    }
-
-
-    ImGui::Image((void*)framebuffer->GetColourTexture()->GetID(), viewport, ImVec2(0, 1), ImVec2(1, 0));
-    ImGui::End();
-
- 
-
-    //Viewport End
-
+    ////////////////////////////////////////////////////////
     // Generator Panel Start
 
     ImGui::Begin("GenPanel");
@@ -417,7 +389,7 @@ void Application::Update(float delta)
             ImGui::TableSetColumnIndex(2);
             if (ImGui::Button("Default##seed"))
             {
-                data.seed = 20.0f;
+                data.noiseScale = 20.0f;
             }
             ///////////////////////////////////////
             ////// Octaves ////////////////////////
@@ -517,7 +489,24 @@ void Application::Update(float delta)
             ImGui::TableSetColumnIndex(1);
             if (ImGui::Checkbox("##pixelate", &pixelate))
             {
-                GenerateTerrain();
+                if (autoUpdateGenerator)
+                {
+                    GenerateTerrain();
+                }
+            }
+            ///////////////////////////////////////
+            ////// Falloff Map ////////////////////
+            ///////////////////////////////////////
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Use Falloff Map");
+            ImGui::TableSetColumnIndex(1);
+            if (ImGui::Checkbox("##falloff", &useFalloffMap))
+            {
+                if(autoUpdateGenerator)
+                {
+                    GenerateTerrain();
+                }
             }
 
             ImGui::EndTable();
@@ -638,12 +627,36 @@ void Application::Update(float delta)
     {
         ImGui::Text("Height Map");
         ImGui::Image(heightMap->GetID(), ImVec2(panelSize.x, panelSize.x));
+        ImGui::Text("Noise Map");
+        ImGui::Image(noiseMap->GetID(), ImVec2(panelSize.x, panelSize.x));
         ImGui::Text("Colour Map");
         ImGui::Image(colourMap->GetID(), ImVec2(panelSize.x, panelSize.x));
+        ImGui::Text("Falloff Map");
+        ImGui::Image(falloffMap->GetID(), ImVec2(panelSize.x, panelSize.x));
     }
     ImGui::End();
 
     // Generator Panel End
+    ////////////////////////////////////////////////////////
+    // Viewport Start    
+
+    ImGui::Begin("Viewport");
+    ImVec2 viewport = ImGui::GetContentRegionAvail();
+    viewportHovered = ImGui::IsWindowHovered();
+    viewportFocused = ImGui::IsWindowFocused();
+
+    if (OpenGL::FBSpec spec = framebuffer->GetSpec(); viewport.x > 0.0f && viewport.y > 0.0f && ((float)spec.width != viewport.x || (float)spec.height != viewport.y))
+    {
+        framebuffer->Resize((unsigned int)viewport.x, (unsigned int)viewport.y);
+        camera->SetViewportSize(viewport.x, viewport.y);
+    }
+
+
+    ImGui::Image(framebuffer->GetColourTexture()->GetID(), viewport, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::End();
+
+    //Viewport End
+    ////////////////////////////////////////////////////////
 
     if (autoUpdateGenerator)
     {
@@ -653,6 +666,8 @@ void Application::Update(float delta)
             dataLastFrame = data;
         }
     }
+    
+    showExtraTextures = useFalloffMap ? true : false;
 
     if (displayType != previousDisplayType)
     {
@@ -663,10 +678,21 @@ void Application::Update(float delta)
     switch (textureDisplayType)
     {
         case DisplayTextureType::HeightMap:
-            if(mesh->GetMaterial()->GetTexture() != heightMap)
+            if (useFalloffMap)
             {
-                mesh->GetMaterial()->SetTexture(heightMap);
+                if (mesh->GetMaterial()->GetTexture() != heightMap)
+                {
+                    mesh->GetMaterial()->SetTexture(heightMap);
+                }
             }
+            else
+            {
+                if (mesh->GetMaterial()->GetTexture() != noiseMap)
+                {
+                    mesh->GetMaterial()->SetTexture(noiseMap);
+                }
+            }
+            
             break;
         case DisplayTextureType::ColourMap:
             if (mesh->GetMaterial()->GetTexture() != colourMap)
@@ -677,6 +703,32 @@ void Application::Update(float delta)
         default:
             break;
     }
+
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    framebuffer->Bind();
+
+    glEnable(GL_DEPTH_TEST);
+
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    shader.Bind();
+
+    shader.SetVec("viewPos", camera->GetPosition());
+    shader.SetMat("projection", camera->GetProjectionMatrix());
+    shader.SetMat("view", camera->GetViewMatrix());
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(5.0f));
+
+    shader.SetMat("model", model);
+
+    mesh->Draw();
+
+    framebuffer->Unbind();
 }
 
 
@@ -798,14 +850,12 @@ void Application::GenerateTerrain()
         regions = defaultRegions;
     }
 
-    TerrainGenerator generator;
-
     switch (noiseType)
     {
         case NoiseType::Perlin:
         {
             PerlinGenData perlin(NoiseType::Perlin, data.noiseScale, data.octaves, data.persistence, data.lacunarity, data.offset, data.seed);
-            generator.GenerateTerrain(&perlin, regions, data.heightCurve, data.heightMultiplier);
+            generator.GenerateTerrain(&perlin, regions, data.heightCurve, useFalloffMap, data.heightMultiplier);
             break;
         }
         case NoiseType::Simplex:
@@ -844,11 +894,15 @@ void Application::GenerateTerrain()
     {
         heightMap->Create(terrain.size, terrain.size, terrain.heightTexture.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::ClampToEdge, TextureFilter::Nearest);
         colourMap->Create(terrain.size, terrain.size, terrain.colourTexture.data(), TextureType::Colour, TextureFormat::RGB, TextureWrapping::ClampToEdge, TextureFilter::Nearest);
+        falloffMap->Create(terrain.size, terrain.size, terrain.falloffTexture.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::ClampToEdge, TextureFilter::Nearest);
+        noiseMap->Create(terrain.size, terrain.size, terrain.noiseTexture.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::ClampToEdge, TextureFilter::Nearest);
     }
     else
     {
         heightMap->Create(terrain.size, terrain.size, terrain.heightTexture.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::ClampToEdge, TextureFilter::Linear);
         colourMap->Create(terrain.size, terrain.size, terrain.colourTexture.data(), TextureType::Colour, TextureFormat::RGB, TextureWrapping::ClampToEdge, TextureFilter::Linear);
+        falloffMap->Create(terrain.size, terrain.size, terrain.falloffTexture.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::ClampToEdge, TextureFilter::Linear);
+        noiseMap->Create(terrain.size, terrain.size, terrain.noiseTexture.data(), TextureType::Colour, TextureFormat::GS, TextureWrapping::ClampToEdge, TextureFilter::Linear);
     }
 }
 
@@ -877,8 +931,56 @@ void Application::Save()
 {
 }
 
-void Application::Export()
+void Application::Export(FileType type)
 {
+    SDL_DialogFileFilter filters;
+
+    std::string defaultName;
+
+    currentType = type;
+
+    switch (type)
+    {
+        case FileType::FBX:
+            filters.name = "FBX";
+            filters.pattern = "fbx";
+            defaultName = "Terrain.fbx";
+            break;
+        case FileType::OBJ:
+            filters.name = "OBJ";
+            filters.pattern = "obj";
+            defaultName = "Terrain.obj";
+            break;
+        default:
+            break;
+    }
+
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_FILTERS_POINTER, &filters);
+    SDL_SetNumberProperty(props, SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, 1);
+    SDL_SetPointerProperty(props, SDL_PROP_FILE_DIALOG_WINDOW_POINTER, window);
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_LOCATION_STRING, (rootDir.string() + "\\" + defaultName).c_str());
+    SDL_SetBooleanProperty(props, SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, false);
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_TITLE_STRING, "Save Terrain");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_ACCEPT_STRING, "Save");
+    SDL_SetStringProperty(props, SDL_PROP_FILE_DIALOG_CANCEL_STRING, "Cancel");
+
+    void* data = 0;
+
+    SDL_ShowFileDialogWithProperties(SDL_FILEDIALOG_SAVEFILE, OpenFileCallback, data, props);
+}
+
+void OpenFileCallback(void* userdata, const char* const* filelist, int filter_index)
+{
+    if (!filelist) return;
+    else if (filelist[0] == nullptr) return;
+    else
+    {
+        const char* file = *filelist;
+        std::cout << file << '\n';
+
+        Application::Get()->ExportFile((void*)file);
+    }
 }
 
 void Application::OnMouseDown(MouseButtonDownEvent& event)
@@ -932,4 +1034,15 @@ void Application::OnKeyDown(KeyDownEvent& event)
 void Application::OnKeyUp(KeyUpEvent& event)
 {
 
+}
+
+void Application::ExportFile(void* data)
+{
+    std::string path = (const char*)data;
+
+    std::filesystem::path savePath(path);
+
+    auto terrainData = generator.GetData();
+
+    exporter.Export(savePath, terrainData, currentType);
 }

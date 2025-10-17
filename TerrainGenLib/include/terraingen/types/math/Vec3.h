@@ -6,7 +6,7 @@ namespace Math
 	{
 		float x, y, z;
 
-		Vec3() = default;
+		Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
 		inline Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
 
 		float& operator[](size_t index);
@@ -40,5 +40,7 @@ namespace Math
 		Vec3 Normalised() const;
 
 		Vec3 Cross(const Vec3& other) const;
+
+		static Vec3 Cross(const Vec3& a, const Vec3& b);
 	};
 }

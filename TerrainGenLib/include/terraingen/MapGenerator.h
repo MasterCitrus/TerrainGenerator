@@ -10,13 +10,19 @@ class MapGenerator
 public:
 	MapGenerator();
 
-	MapData GenerateMap(GenData* data, const RegionData& regions, unsigned int size);
+	MapData GenerateMap(GenData* data, const RegionData& regions, unsigned int size, bool falloffMap);
 
 private:
 	HeightData GenerateNoiseMap(GenData* data, unsigned int size);
-	ColourData GenerateColourMap(const HeightData& map, const RegionData& regions);
+	ColourData GenerateColourMap(const HeightData& map, const RegionData& regions, unsigned int size);
+	HeightData GenerateFalloffMap(unsigned int size);
+	HeightData CombineNoiseAndFalloff(const HeightData& noise, const HeightData& falloff, unsigned int size);
 
 	HeightData PerlinMap(PerlinGenData data, unsigned int size);
+
+private:
+
+	float Evaluate(float value);
 
 private:
 	Perlin perlin;

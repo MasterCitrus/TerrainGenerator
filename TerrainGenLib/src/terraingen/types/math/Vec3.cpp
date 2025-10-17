@@ -135,3 +135,8 @@ Vec3 Math::Vec3::Cross(const Vec3& other) const
 {
     return Vec3(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x);
 }
+
+Vec3 Math::Vec3::Cross(const Vec3& a, const Vec3& b)
+{
+    return Vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}

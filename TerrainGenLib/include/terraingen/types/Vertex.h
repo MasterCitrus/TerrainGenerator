@@ -7,7 +7,7 @@ using namespace Math;
 
 struct Vertex
 {
-	Vec3 pos;
-	Vec3 norm;
-	Vec2 uv;
+	Vec3 pos = { 0.0f, 0.0f, 0.0f };
+	Vec3 norm = { 0.0f, 0.0f, 0.0f };
+	Vec2 uv = { 0.0f, 0.0f };
 };

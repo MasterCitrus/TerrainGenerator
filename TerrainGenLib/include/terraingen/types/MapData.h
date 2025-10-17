@@ -9,11 +9,13 @@ using namespace Math;
 
 struct MapData
 {
+	HeightData noiseMap;
+	HeightData falloffMap;
 	HeightData heightMap;
 	ColourData colourMap;
 
 	MapData() = default;
 
-	inline MapData(HeightData heightMap, ColourData colourMap)
-		: heightMap(heightMap), colourMap(colourMap) { }
+	inline MapData(HeightData heightMap, HeightData noiseMap, HeightData falloffMap, ColourData colourMap)
+		: heightMap(heightMap), noiseMap(noiseMap), falloffMap(falloffMap), colourMap(colourMap) { }
 };

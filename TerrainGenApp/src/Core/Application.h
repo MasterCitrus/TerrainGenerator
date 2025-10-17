@@ -8,6 +8,7 @@
 #include "OpenGL/Shader.h"
 
 #include <terraingen/TerrainGenerator.h>
+#include <terraingen/TerrainExporter.h>
 #include <terraingen/types/TerrainType.h>
 
 #include <filesystem>
@@ -44,6 +45,10 @@ public:
 
 	void OnEvent(Event& event);
 
+	static Application* Get() { return app; }
+
+	void ExportFile(void* data);
+
 private:
 	void ProcessSDLEvents();
 	void RegisterListeners();
@@ -53,7 +58,7 @@ private:
 	void Reset();
 	void Open();
 	void Save();
-	void Export();
+	void Export(FileType type);
 
 	void OnMouseDown(MouseButtonDownEvent& event);
 	void OnMouseUp(MouseButtonUpEvent& event);
@@ -62,19 +67,26 @@ private:
 	void OnKeyDown(KeyDownEvent& event);
 	void OnKeyUp(KeyUpEvent& event);
 
+public:
+	static Application* app;
+
 private:
-	CurveEditor curveEditor;
+	TerrainExporter exporter;
+	TerrainGenerator generator;
 	EventBus cameraEvents;
 	EventBus appEvents;
-	std::vector<TerrainType> regions;
-	std::filesystem::path rootDir;
 	GeneratorData data;
 	GeneratorData dataLastFrame;
+	std::vector<TerrainType> regions;
+	std::filesystem::path rootDir;
+	CurveEditor curveEditor;
 	SDL_Window* window;
 	OpenGL::Camera* camera;
 	OpenGL::Material* mat;
 	OpenGL::Mesh* mesh;
 	OpenGL::Texture* heightMap;
+	OpenGL::Texture* noiseMap;
+	OpenGL::Texture* falloffMap;
 	OpenGL::Texture* colourMap;
 	OpenGL::Framebuffer* framebuffer;
 	SDL_GLContext context;
@@ -84,13 +96,15 @@ private:
 	DisplayType previousDisplayType = displayType;
 	DisplayTextureType textureDisplayType = DisplayTextureType::HeightMap;
 	NoiseType noiseType = NoiseType::Perlin;
+	FileType currentType;
 	bool running = false;
 	bool showDemoWindow = false;
 	bool autoUpdateGenerator = false;
 	bool viewportHovered = false;
 	bool viewportFocused = false;
 	bool pixelate = false;
-	bool regionsPendingSort = false;
-	bool regionsSorted = true;
-	bool waitToSort = false;
+	bool useFalloffMap = false;
+	bool showExtraTextures = false;
 };
+
+static void SDLCALL OpenFileCallback(void* userdata, const char* const* filelist, int filter_index);

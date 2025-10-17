@@ -6,7 +6,7 @@
 
 #include <sstream>
 
-struct Curve;
+class Curve;
 
 class CurveEditor
 {

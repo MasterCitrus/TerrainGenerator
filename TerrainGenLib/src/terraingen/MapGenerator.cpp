@@ -8,12 +8,24 @@ MapGenerator::MapGenerator()
 	perlin = Perlin();
 }
 
-MapData MapGenerator::GenerateMap(GenData* data, const RegionData& regions, unsigned int size)
+MapData MapGenerator::GenerateMap(GenData* data, const RegionData& regions, unsigned int size, bool falloffMap)
 {
 	MapData mapData;
 
-	mapData.heightMap = GenerateNoiseMap(data, size);
-	mapData.colourMap = GenerateColourMap(mapData.heightMap, regions);
+	mapData.noiseMap = GenerateNoiseMap(data, size);
+	if (mapData.falloffMap.empty())
+	{
+		mapData.falloffMap = GenerateFalloffMap(size);
+	}
+	mapData.heightMap = CombineNoiseAndFalloff(mapData.noiseMap, mapData.falloffMap, size);
+	if(falloffMap)
+	{
+		mapData.colourMap = GenerateColourMap(mapData.heightMap, regions, size);
+	}
+	else
+	{
+		mapData.colourMap = GenerateColourMap(mapData.noiseMap, regions, size);
+	}
 
 	return mapData;
 }
@@ -34,33 +46,74 @@ HeightData MapGenerator::GenerateNoiseMap(GenData* data, unsigned int size)
 		default:
 			break;
 	}
+
+	return HeightData();
 }
 
-std::vector<Vec3> MapGenerator::GenerateColourMap(const HeightData& map, const RegionData& regions)
+std::vector<Vec3> MapGenerator::GenerateColourMap(const HeightData& map, const RegionData& regions, unsigned int size)
 {
-	std::vector<Vec3> colourMap(256 * 256);
+	ColourData colourMap(size * size);
 
-	for (int y = 0; y < 256; y++)
+	for (unsigned int y = 0; y < size; y++)
 	{
-		for (int x = 0; x < 256; x++)
+		for (unsigned int x = 0; x < size; x++)
 		{
 			float currentHeight = map[y][x];
-			for (int i = 0; i < regions.size(); i++)
+			for (unsigned int i = 0; i < regions.size(); i++)
 			{
 				if (currentHeight <= regions[i].height)
 				{
-					colourMap[y * 256 + x] = regions[i].colour;
+					colourMap[y * size + x] = regions[i].colour;
 					break;
 				}
 			}
 			if (regions.empty())
 			{
-				colourMap[y * 256 + x] = Vec3(0.0f, 0.0f, 0.0f);
+				colourMap[y * size + x] = Vec3(0.0f, 0.0f, 0.0f);
 			}
 		}
 	}
 
 	return colourMap;
+}
+
+HeightData MapGenerator::GenerateFalloffMap(unsigned int size)
+{
+	HeightData map(size, std::vector<float>(size));
+
+	for (unsigned int i = 0; i < size; i++)
+	{
+		for (unsigned int j = 0; j < size; j++)
+		{
+			float x = i / (float)size * 2.0f - 1.0f;
+			float y = j / (float)size * 2.0f - 1.0f;
+
+			float value = std::max(std::abs(x), std::abs(y));
+
+			map[j][i] = Evaluate(value);
+		}
+	}
+
+	return map;
+}
+
+HeightData MapGenerator::CombineNoiseAndFalloff(const HeightData& noise, const HeightData& falloff, unsigned int size)
+{
+	HeightData heightMap(size, std::vector<float>(size));
+
+	for (unsigned int y = 0; y < size; y++)
+	{
+		for (unsigned int x = 0; x < size; x++)
+		{
+			float currentHeight = noise[y][x];
+			float currentFalloff = falloff[y][x];
+
+			float value = std::max(0.0f, std::min(1.0f, Lerp(currentHeight, -currentFalloff, std::pow(currentFalloff, 1.0f))));
+			heightMap[y][x] = value;
+		}
+	}
+
+	return heightMap;
 }
 
 HeightData MapGenerator::PerlinMap(PerlinGenData data, unsigned int size)
@@ -89,9 +142,9 @@ HeightData MapGenerator::PerlinMap(PerlinGenData data, unsigned int size)
 	float halfWidth = size / 2.0f;
 	float halfHeight = size / 2.0f;
 
-	for (int y = 0; y < size; y++)
+	for (unsigned int y = 0; y < size; y++)
 	{
-		for (int x = 0; x < size; x++)
+		for (unsigned int x = 0; x < size; x++)
 		{
 			float amplitude = 1.0f;
 			float frequency = 1.0f;
@@ -121,13 +174,21 @@ HeightData MapGenerator::PerlinMap(PerlinGenData data, unsigned int size)
 		}
 	}
 
-	for (int y = 0; y < size; y++)
+	for (unsigned int y = 0; y < size; y++)
 	{
-		for (int x = 0; x < size; x++)
+		for (unsigned int x = 0; x < size; x++)
 		{
 			map[y][x] = Math::InverseLerp(minNoiseHeight, maxNoiseHeight, map[y][x]);
 		}
 	}
 
 	return map;
+}
+
+float MapGenerator::Evaluate(float value)
+{
+	float a = 3.0f;
+	float b = 2.2f;
+
+	return std::pow(value, a) / (std::pow(value, a) + std::pow((b - b * value), a));
 }

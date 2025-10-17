@@ -1,6 +1,8 @@
 #include "terraingen/MeshGenerator.h"
 #include "terraingen/types/math/Vec2.h"
 
+#include <algorithm>
+
 MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultiplier, const Curve& heightCurve)
 {
 	MeshData meshData;
@@ -15,12 +17,11 @@ MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultipl
 
 	int vertexIndex = 0;
 	int indicesIndex = 0;
-	for (int y = 0; y < size; y++)
+	for (unsigned int y = 0; y < size; y++)
 	{
-		for (int x = 0; x < size; x++)
+		for (unsigned int x = 0; x < size; x++)
 		{
 			vertices[vertexIndex].pos = Vec3(topLeftX + x, heightCurve.Evaluate(data[y][x]) * heightMultiplier, topLeftZ - y);
-			//vertices[vertexIndex].pos = ComputeNormal(x, y, size, data);
 			vertices[vertexIndex].uv = Vec2(x / (float)(size - 1), y / (float)(size - 1));
 
 			if (x < size - 1 && y < size - 1)
@@ -46,35 +47,41 @@ MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultipl
 		}
 	}
 
+	ComputeNormal(vertices, indices, size);
+
 	meshData.vertices = vertices;
 	meshData.indices = indices;
 
 	return meshData;
 }
 
-Math::Vec3 MeshGenerator::ComputeNormal(int x, int y, int size, const HeightData& data)
+void MeshGenerator::ComputeNormal(VertexData& vertices, const IndexData indices, int size)
 {
-	float hL = Sample(x, y, size, data);
-	float hR = Sample(x, y, size, data);
-	float hD = Sample(x, y, size, data);
-	float hU = Sample(x, y, size, data);
+	for (int i = 0; i < indices.size() / 3; i++)
+	{
+		int index = i * 3;
+		unsigned int index0 = indices[index];
+		unsigned int index1 = indices[index + 1];
+		unsigned int index2 = indices[index + 2];
 
-	Math::Vec3 normal;
-	normal.x = hL - hR;
-	normal.y = 2.0f;
-	normal.z = hD - hU;
+		const Vec3& pos0 = vertices[index0].pos;
+		const Vec3& pos1 = vertices[index1].pos;
+		const Vec3& pos2 = vertices[index2].pos;
 
-	normal.Normalise();
+		Vec3 edge1 = pos1 - pos0;
+		Vec3 edge2 = pos2 - pos0;
 
-	return normal;
-}
+		Vec3 faceNormal;
+		faceNormal = Vec3::Cross(edge1, edge2);
+		faceNormal.Normalise();
 
-float MeshGenerator::Sample(int x, int y, int size, const HeightData& data) const
-{
-	if (x < 0) x = 0;
-	else if (x >= size) x = size - 1;
-	if (y < 0) y = 0;
-	else if (y >= size) x = size - 1;
+		vertices[index0].norm += faceNormal;
+		vertices[index1].norm += faceNormal;
+		vertices[index2].norm += faceNormal;
+	}
 
-	return data[y][x];
+	for (auto& vert : vertices)
+	{
+		vert.norm.Normalise();
+	}
 }
