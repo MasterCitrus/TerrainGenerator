@@ -57,6 +57,14 @@ bool Application::Initialise()
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     window = SDL_CreateWindow("Terrain Generator", 1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    
+    icon = SDL_LoadPNG((rootDir.string() + "icon.png").c_str());
+
+    if (icon)
+    {
+        SDL_SetWindowIcon(window, icon);
+        SDL_DestroySurface(icon);
+    }
 
     if (!window)
     {
@@ -106,10 +114,14 @@ bool Application::Initialise()
     falloffMap = new OpenGL::Texture;
     colourMap = new OpenGL::Texture;
 
-    if (!shader.Load(rootDir.string() + "\\shaders\\mesh.vert", rootDir.string() + "\\shaders\\mesh.frag"))
+    if (!shader.Load(rootDir.string() + "\\shaders\\mesh - unlit.vert", rootDir.string() + "\\shaders\\mesh - unlit.frag"))
     {
         return false;
     }
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
     running = true;
 

@@ -23,6 +23,7 @@ namespace OpenGL
 	class Texture;
 }
 
+struct SDL_Surface;
 struct SDL_Window;
 struct SDL_GLContextState;
 
@@ -91,6 +92,7 @@ private:
 	OpenGL::Texture* falloffMap;
 	OpenGL::Texture* colourMap;
 	OpenGL::Framebuffer* framebuffer;
+	SDL_Surface* icon;
 	SDL_GLContext context;
 	unsigned int fps = 0;
 	OpenGL::Shader shader;

@@ -33,13 +33,13 @@ MeshData MeshGenerator::GenerateMesh(const HeightData& data, float heightMultipl
 
 				// First Tri
 				indices[indicesIndex] = topLeft;
-				indices[indicesIndex + 1] = bottomLeft;
-				indices[indicesIndex + 2] = topRight;
+				indices[indicesIndex + 1] = topRight;
+				indices[indicesIndex + 2] = bottomRight;
 
 				// Second Tri
-				indices[indicesIndex + 3] = topRight;
+				indices[indicesIndex + 3] = bottomRight;
 				indices[indicesIndex + 4] = bottomLeft;
-				indices[indicesIndex + 5] = bottomRight;
+				indices[indicesIndex + 5] = topLeft;
 
 				indicesIndex += 6;
 			}

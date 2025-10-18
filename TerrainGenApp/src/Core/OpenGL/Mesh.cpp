@@ -81,27 +81,27 @@ Mesh::~Mesh()
 void Mesh::MakeQuad()
 {
 	// Vertex positions
-	glm::vec3 pos1 = { -0.5f, 0.0f, -0.5f }; // Bottom Left
-	glm::vec3 pos2 = { 0.5f, 0.0f, -0.5f }; // Bottom Right
-	glm::vec3 pos3 = { -0.5f, 0.0f, 0.5f }; // Top Left
-	glm::vec3 pos4 = { 0.5f, 0.0f, 0.5f }; // Top Right
+	glm::vec3 pos1 = { -0.5f, 0.0f, 0.5f }; // Top Left
+	glm::vec3 pos2 = { 0.5f, 0.0f, 0.5f }; // Top Right
+	glm::vec3 pos3 = { 0.5f, 0.0f, -0.5f }; // Bottom Right
+	glm::vec3 pos4 = { -0.5f, 0.0f, -0.5f }; // Bottom Left
 
 	glm::vec3 norm = { 0.0f, 1.0f, 0.0f }; // Y up
 
-	glm::vec2 uv1 = { 0.0f, 0.0f }; // Bottom Left
-	glm::vec2 uv2 = { 1.0f, 0.0f }; // Bottom Right
-	glm::vec2 uv3 = { 0.0f, 1.0f }; // Top Left
-	glm::vec2 uv4 = { 1.0f, 1.0f }; // Top Right
+	glm::vec2 uv1 = { 0.0f, 1.0f }; // Top Left
+	glm::vec2 uv2 = { 1.0f, 1.0f }; // Top Right
+	glm::vec2 uv3 = { 1.0f, 0.0f }; // Bottom Right
+	glm::vec2 uv4 = { 0.0f, 0.0f }; // Bottom Left
 
-	Vertex bottomLeft = { pos1, norm, uv1 };
-	Vertex bottomRight = { pos2, norm, uv2 };
-	Vertex topRight = { pos3, norm, uv3 };
-	Vertex topLeft = { pos4, norm, uv4 };
+	Vertex topLeft = { pos1, norm, uv1 };
+	Vertex topRight = { pos2, norm, uv2 };
+	Vertex bottomRight = { pos3, norm, uv3 };
+	Vertex bottomLeft = { pos4, norm, uv4 };
 
-	vertices.push_back(bottomLeft);
-	vertices.push_back(bottomRight);
 	vertices.push_back(topLeft);
 	vertices.push_back(topRight);
+	vertices.push_back(bottomRight);
+	vertices.push_back(bottomLeft);
 
 	indices = { 0, 1, 2, 2, 3, 0 };
 }
