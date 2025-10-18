@@ -14,7 +14,9 @@ enum class FileHeader : uint8_t
 
 // .tgen File layout
 // 
-// Header					- 10 bytes
+// Header
+//	- Length				- 2 bytes
+//	- Header String			- variable bytes
 // Num of Regions			- 2 bytes
 // Region Data
 //	- Region Name length	- 1 byte
