@@ -51,35 +51,35 @@ public:
 class MouseMoveEvent : public Event
 {
 public:
-	MouseMoveEvent(int x, int y, int dx, int dy) : x(x), y(y), dx(dx), dy(dy) {}
+	MouseMoveEvent(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy) {}
 	EventType GetType() const override { return EventType::MouseMove; }
 
 public:
-	int x, y;
-	int dx, dy;
+	float x, y;
+	float dx, dy;
 };
 
 class MouseButtonEvent : public Event
 {
 public:
-	MouseButtonEvent(uint8_t button, int x, int y) : button(button), x(x), y(y) {}
+	MouseButtonEvent(uint8_t button, float x, float y) : button(button), x(x), y(y) {}
 
 public:
 	uint8_t button;
-	int x, y;
+	float x, y;
 };
 
 class MouseButtonDownEvent : public MouseButtonEvent
 {
 public:
-	MouseButtonDownEvent(uint8_t button, int x, int y) : MouseButtonEvent(button, x, y) {}
+	MouseButtonDownEvent(uint8_t button, float x, float y) : MouseButtonEvent(button, x, y) {}
 	EventType GetType() const override { return EventType::MouseButtonDown; }
 };
 
 class MouseButtonUpEvent : public MouseButtonEvent
 {
 public:
-	MouseButtonUpEvent(uint8_t button, int x, int y) : MouseButtonEvent(button, x, y) {}
+	MouseButtonUpEvent(uint8_t button, float x, float y) : MouseButtonEvent(button, x, y) {}
 	EventType GetType() const override { return EventType::MouseButtonUp; }
 };
 

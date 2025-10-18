@@ -466,7 +466,7 @@ bool CurveEditor::HandleInput(Curve& curve, const ImVec2& canvasPos, const ImVec
     // Delete key with right click
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && isHovered)
     {
-        for (int i = keys.size() - 1; i >= 0; i--)
+        for (unsigned int i = keys.size() - 1; i > 0; i--)
         {
             ImVec2 keyPos = TimeValueToScreen(keys[i].time, keys[i].value, canvasPos, canvasSize);
             float dist = sqrtf(powf(io.MousePos.x - keyPos.x, 2) + powf(io.MousePos.y - keyPos.y, 2));

@@ -218,7 +218,7 @@ void Camera::OnMouseScroll(MouseScrollEvent& event)
 
 void Camera::OnMouseMove(MouseMoveEvent& event)
 {
-	const glm::vec2& mouse = { (float)event.x, (float)event.y };
+	const glm::vec2& mouse = { event.x, event.y };
 	glm::vec2 mouseDelta = (mouse - lastMousePos) * 0.009f;
 	lastMousePos = mouse;
 	if (middleMouse)

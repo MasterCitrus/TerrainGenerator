@@ -71,7 +71,7 @@ TextureData TerrainExporter::FlipTexture(const TextureData& data, unsigned int s
 	TextureData tempCopy = data;
 	TextureData row(rowSize);
 
-	for (int i = 0; i < size / 2; i++)
+	for (unsigned int i = 0; i < size / 2; i++)
 	{
 		unsigned char* rowTop = tempCopy.data() + i * rowSize;
 		unsigned char* rowBottom = tempCopy.data() + (size - i - 1) * rowSize;

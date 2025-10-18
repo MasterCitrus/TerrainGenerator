@@ -16,7 +16,7 @@ TextureData TextureGenerator::GenerateTextureFromNoise(const HeightData& data)
     {
         for (unsigned int x = 0; x < size; x++)
         {
-            noiseData[k] = std::floor(data[y][x] * 255);
+            noiseData[k] = std::floor(data[y][x] * 255.0f);
             k++;
         }
     }
@@ -32,9 +32,9 @@ TextureData TextureGenerator::GenerateTextureFromColour(const ColourData& data)
 
     for (unsigned int i = 0; i < size; i++)
     {
-        colourTextureData[i * 3 + 0] = std::floor(data[i].x * 255);
-        colourTextureData[i * 3 + 1] = std::floor(data[i].y * 255);
-        colourTextureData[i * 3 + 2] = std::floor(data[i].z * 255);
+        colourTextureData[i * 3 + 0] = std::floor(data[i].x * 255.0f);
+        colourTextureData[i * 3 + 1] = std::floor(data[i].y * 255.0f);
+        colourTextureData[i * 3 + 2] = std::floor(data[i].z * 255.0f);
     }
 
     return colourTextureData;
