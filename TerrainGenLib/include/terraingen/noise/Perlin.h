@@ -11,6 +11,7 @@ public:
 	float Noise(float x, float y, float z = 0.0f);
 
 private:
+	// Quintic smoothstep
 	static float Fade(float t);
 	static float Lerp(float t, float a, float b);
 	static float Grad(int hash, float x, float y, float z);

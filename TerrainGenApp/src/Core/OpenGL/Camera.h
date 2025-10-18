@@ -68,7 +68,7 @@ namespace OpenGL
 		glm::vec2 lastMousePos = { 0.0f, 0.0f };
 
 		float pitch = glm::radians(30.0f), yaw = 0.0f;
-		float distance = 10.0f;
+		float distance = 300.0f;
 		float fov = 45.0f;
 		float aspectRatio = 1.778f;
 		float nearClip = 0.1f;

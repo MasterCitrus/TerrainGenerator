@@ -666,8 +666,6 @@ void Application::Update(float delta)
             dataLastFrame = data;
         }
     }
-    
-    showExtraTextures = useFalloffMap ? true : false;
 
     if (displayType != previousDisplayType)
     {
@@ -704,6 +702,12 @@ void Application::Update(float delta)
             break;
     }
 
+    if (loadedTerrain)
+    {
+        GenerateTerrain();
+        loadedTerrain = false;
+    }
+
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -722,7 +726,14 @@ void Application::Update(float delta)
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(5.0f));
+    if (displayType == DisplayType::Quad)
+    {
+        model = glm::scale(model, glm::vec3(250.0f));
+    }
+    else
+    {
+        model = glm::scale(model, glm::vec3(1.0f));
+    }
 
     shader.SetMat("model", model);
 
@@ -1137,15 +1148,18 @@ void Application::LoadFile(void* data)
 
     auto loadData = Serializer::Deserialize(loadPath);
 
-    regions = loadData.regions;
-    this->data.heightCurve = loadData.heightCurve;
-    this->data.heightMultiplier = loadData.heightMultiplier;
-    this->data.lacunarity = loadData.lacunarity;
-    this->data.noiseScale = loadData.noiseScale;
-    this->data.octaves = loadData.octaves;
-    this->data.persistence = loadData.persistence;
-    this->data.offset = loadData.offset;
-    this->data.seed = loadData.seed;
+    if(loadData.valid)
+    {
+        regions = loadData.regions;
+        this->data.heightCurve = loadData.heightCurve;
+        this->data.heightMultiplier = loadData.heightMultiplier;
+        this->data.lacunarity = loadData.lacunarity;
+        this->data.noiseScale = loadData.noiseScale;
+        this->data.octaves = loadData.octaves;
+        this->data.persistence = loadData.persistence;
+        this->data.offset = loadData.offset;
+        this->data.seed = loadData.seed;
 
-    GenerateTerrain();
+        loadedTerrain = true;
+    }
 }

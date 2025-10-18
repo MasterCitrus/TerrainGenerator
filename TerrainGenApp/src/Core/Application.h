@@ -106,7 +106,7 @@ private:
 	bool viewportFocused = false;
 	bool pixelate = false;
 	bool useFalloffMap = false;
-	bool showExtraTextures = false;
+	bool loadedTerrain = false;
 };
 
 static void ExportModelCallback(void* userdata, const char* const* filelist, int filter_index);

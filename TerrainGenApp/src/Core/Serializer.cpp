@@ -6,16 +6,12 @@ void Serializer::Serialize(const SaveData& data, const std::filesystem::path& pa
     std::ofstream file;
     file.open(path.string(), std::ios::binary);
 
-    auto header = GetHeaderString(FileHeader::TGENV1);
+    if (!file) return;
 
-    uint8_t len = header.length();
-    uint8_t padding = 10 - len;
+    std::string header = GetHeaderString(FileHeader::TGENV1);
 
-    std::vector<char> null(padding, '\0');
-
-    // Header with version + padding
-    file.write(header.data(), len);
-    file.write(null.data(), padding);
+    // Header
+    WriteString(file, header);
 
     // Region data
     uint16_t numRegions = static_cast<uint16_t>(data.regions.size());
@@ -23,33 +19,22 @@ void Serializer::Serialize(const SaveData& data, const std::filesystem::path& pa
 
     for (int i = 0; i < data.regions.size(); i++)
     {
-        uint8_t strLen = data.regions[i].name.length();
-        file.write(reinterpret_cast<const char*>(&strLen), sizeof(strLen));
-        file.write(data.regions[i].name.data(), strLen);
-        file.write(reinterpret_cast<const char*>(&data.regions[i].colour.x), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&data.regions[i].colour.y), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&data.regions[i].colour.z), sizeof(float));
+        WriteString(file, data.regions[i].name);
+        WriteVec3(file, data.regions[i].colour);
         file.write(reinterpret_cast<const char*>(&data.regions[i].height), sizeof(float));
     }
 
     // Curve data
-    uint16_t numCurves = static_cast<uint16_t>(data.heightCurve.AmountOfKeys());
-    file.write(reinterpret_cast<const char*>(&numCurves), sizeof(numCurves));
+    uint16_t numKeys = static_cast<uint16_t>(data.heightCurve.AmountOfKeys());
+    file.write(reinterpret_cast<const char*>(&numKeys), sizeof(numKeys));
 
     for (const auto& key : data.heightCurve.Keys())
     {
-        file.write(reinterpret_cast<const char*>(&key.time), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&key.value), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&key.inTangent), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&key.outTangent), sizeof(float));
-
-        uint8_t selected = key.selected ? 1 : 0;
-        file.write(reinterpret_cast<const char*>(&selected), sizeof(selected));
+        WriteCurveKey(file, key);
     }
 
     // Other data
-    file.write(reinterpret_cast<const char*>(&data.offset.x), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&data.offset.y), sizeof(float));
+    WriteVec2(file, data.offset);
 
     file.write(reinterpret_cast<const char*>(&data.seed), sizeof(data.seed));
     file.write(reinterpret_cast<const char*>(&data.lacunarity), sizeof(float));
@@ -66,9 +51,9 @@ SaveData Serializer::Deserialize(const std::filesystem::path& path)
     std::ifstream file;
     file.open(path.string(), std::ios::binary);
 
-    std::string header;
+    if (!file) return SaveData();
 
-    file.read(header.data(), 10);
+    std::string header = ReadString(file);
 
     FileHeader fileVersion = GetHeaderVersion(header);
 
@@ -85,7 +70,6 @@ SaveData Serializer::Deserialize(const std::filesystem::path& path)
 
 std::string Serializer::GetHeaderString(FileHeader header)
 {
-
     switch (header)
     {
         case FileHeader::TGENV1:
@@ -108,6 +92,80 @@ FileHeader Serializer::GetHeaderVersion(const std::string& header)
     }
 }
 
+std::string Serializer::ReadString(std::ifstream& file)
+{
+    uint16_t len;
+    file.read(reinterpret_cast<char*>(&len), sizeof(len));
+    std::string s(len, '\0');
+    file.read(s.data(), len);
+
+    return s;
+}
+
+void Serializer::WriteString(std::ofstream& file, const std::string& source)
+{
+    uint16_t len = static_cast<uint16_t>(source.size());
+    file.write(reinterpret_cast<const char*>(&len), sizeof(len));
+    file.write(source.data(), len);
+}
+
+Math::Vec2 Serializer::ReadVec2(std::ifstream& file)
+{
+    Math::Vec2 v;
+    file.read(reinterpret_cast<char*>(&v.x), sizeof(float));
+    file.read(reinterpret_cast<char*>(&v.y), sizeof(float));
+
+    return v;
+}
+
+void Serializer::WriteVec2(std::ofstream& file, const Math::Vec2& source)
+{
+    file.write(reinterpret_cast<const char*>(&source.x), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&source.y), sizeof(float));
+}
+
+Math::Vec3 Serializer::ReadVec3(std::ifstream& file)
+{
+    Math::Vec3 v;
+    file.read(reinterpret_cast<char*>(&v.x), sizeof(float));
+    file.read(reinterpret_cast<char*>(&v.y), sizeof(float));
+    file.read(reinterpret_cast<char*>(&v.z), sizeof(float));
+
+    return v;
+}
+
+void Serializer::WriteVec3(std::ofstream& file, const Math::Vec3& source)
+{
+    file.write(reinterpret_cast<const char*>(&source.x), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&source.y), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&source.z), sizeof(float));
+}
+
+CurveKey Serializer::ReadCurveKey(std::ifstream& file)
+{
+    CurveKey key;
+    file.read(reinterpret_cast<char*>(&key.time), sizeof(float));
+    file.read(reinterpret_cast<char*>(&key.value), sizeof(float));
+    file.read(reinterpret_cast<char*>(&key.inTangent), sizeof(float));
+    file.read(reinterpret_cast<char*>(&key.outTangent), sizeof(float));
+
+    uint8_t selected;
+    file.read(reinterpret_cast<char*>(&selected), sizeof(selected));
+    key.selected = selected != 0;
+    return key;
+}
+
+void Serializer::WriteCurveKey(std::ofstream& file, const CurveKey& source)
+{
+    file.write(reinterpret_cast<const char*>(&source.time), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&source.value), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&source.inTangent), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&source.outTangent), sizeof(float));
+
+    uint8_t selected = source.selected ? 1 : 0;
+    file.write(reinterpret_cast<const char*>(&selected), sizeof(selected));
+}
+
 SaveData Serializer::DeserializeV1(std::ifstream& file)
 {
     SaveData data;
@@ -117,45 +175,28 @@ SaveData Serializer::DeserializeV1(std::ifstream& file)
     file.read(reinterpret_cast<char*>(&numRegions), sizeof(numRegions));
 
     data.regions.resize(numRegions);
-    for (int i = 0; i < data.regions.size(); i++)
+    for (auto& region : data.regions)
     {
-        uint8_t strLen;
-        file.read(reinterpret_cast<char*>(&strLen), sizeof(strLen));
-        std::string regionName(strLen, '\0');
-        file.read(regionName.data(), strLen);
-        data.regions[i].name = regionName;
-        file.read(reinterpret_cast<char*>(&data.regions[i].colour.x), sizeof(float));
-        file.read(reinterpret_cast<char*>(&data.regions[i].colour.y), sizeof(float));
-        file.read(reinterpret_cast<char*>(&data.regions[i].colour.z), sizeof(float));
-        file.read(reinterpret_cast<char*>(&data.regions[i].height), sizeof(float));
+        region.name = ReadString(file);
+        region.colour = ReadVec3(file);
+        file.read(reinterpret_cast<char*>(&region.height), sizeof(float));
     }
 
     // Curve data
-    uint16_t numCurves;
-    file.read(reinterpret_cast<char*>(&numCurves), sizeof(numCurves));
+    uint16_t numKeys;
+    file.read(reinterpret_cast<char*>(&numKeys), sizeof(numKeys));
 
     Curve curve;
     curve.ClearKeys();
-    for (int i = 0; i < numCurves; i++)
+    for (int i = 0; i < numKeys; i++)
     {
-        CurveKey key;
-        file.read(reinterpret_cast<char*>(&key.time), sizeof(float));
-        file.read(reinterpret_cast<char*>(&key.value), sizeof(float));
-        file.read(reinterpret_cast<char*>(&key.inTangent), sizeof(float));
-        file.read(reinterpret_cast<char*>(&key.outTangent), sizeof(float));
-
-        uint8_t selected;
-        file.read(reinterpret_cast<char*>(selected), sizeof(selected));
-        key.selected = static_cast<bool>(selected);
-
-        curve.AddKey(key);
+        curve.AddKey(ReadCurveKey(file));
     }
 
     data.heightCurve = curve;
 
     // Other data
-    file.read(reinterpret_cast<char*>(&data.offset.x), sizeof(float));
-    file.read(reinterpret_cast<char*>(&data.offset.y), sizeof(float));
+    data.offset = ReadVec2(file);
 
     file.read(reinterpret_cast<char*>(&data.seed), sizeof(data.seed));
     file.read(reinterpret_cast<char*>(&data.lacunarity), sizeof(float));
@@ -165,6 +206,8 @@ SaveData Serializer::DeserializeV1(std::ifstream& file)
     file.read(reinterpret_cast<char*>(&data.heightMultiplier), sizeof(float));
 
     file.close();
+
+    data.valid = true;
 
     return data;
 }

@@ -22,7 +22,7 @@ enum class FileHeader : uint8_t
 //	- Region Colour			- 12 bytes
 //	- Region Height			- 4 bytes
 // Num of Curve Keys		- 2 bytes
-// Curve data				
+// Curve Key data				
 //	- Curve time			- 4 bytes
 //	- Curve value			- 4 bytes
 //	- Curve In Tan			- 4 bytes
@@ -48,4 +48,5 @@ struct SaveData
 	float noiseScale;
 	unsigned int octaves;
 	float heightMultiplier;
+	bool valid = false;
 };
